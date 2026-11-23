@@ -992,6 +992,7 @@
         longColFlags: [],
         nameColFlags: [],
         timeColIdx: -1,
+        deductColIdx: -1,
         searchMatches: [],
         lastSearchQuery: '',
         lastSearchMode: '', // '' | 'strict' | 'top10'
@@ -1786,6 +1787,28 @@
         return -1;
       }
 
+      function detectDeductColumnIndex(headers) {
+        // Uu tien 1: Tong diem tru / Tong tru
+        for (let i = 0; i < headers.length; i++) {
+          const hNorm = normalizeText(headers[i]);
+          if (/(tong.*diem.*tru|tong.*tru)/.test(hNorm)) return i;
+        }
+        // Uu tien 2: Diem tru / Tru diem
+        for (let i = 0; i < headers.length; i++) {
+          const hNorm = normalizeText(headers[i]);
+          if (/(diem.*tru|tru.*diem)/.test(hNorm)) return i;
+        }
+        return -1;
+      }
+
+      function formatDateVN(ts) {
+        const d = new Date(ts);
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+      }
+
       // Lay gia tri so de xep hang tu cao toi thap
       function parseNumericMetric(val) {
         const s = normSpaces(val);
@@ -1870,6 +1893,7 @@
         state.longColFlags = detectLongDataColumns(state.headers, state.rows);
         state.nameColFlags = detectNameColumns(state.headers);
         state.timeColIdx = detectTimeColumnIndex(state.headers, state.rows);
+        state.deductColIdx = detectDeductColumnIndex(state.headers);
 
         renderBannerBox();
         populateColumnFilter();
@@ -1973,7 +1997,7 @@
         return escapedText;
       }
 
-      // Loc Top 10 ten co so lieu cao nhat theo cot thong tin chon & thoi gian nhan moi nhat so voi thoi gian thuc
+      // Loc Top 10 ten co so lieu cao nhat trong khoang 3 ngay gan nhat tinh tu ngay nhan du lieu moi nhat so voi thoi gian thuc
       function executeTop10ByColumn(colIdx, isSilentRefresh = false) {
         if (!state.rows.length) {
           if (!isSilentRefresh) {
@@ -1993,20 +2017,63 @@
         const nowMs = Date.now();
         const nameColIdx = state.nameColFlags.findIndex(Boolean);
         const timeColIdx = state.timeColIdx;
+        const deductColIdx = state.deductColIdx;
 
-        // Thu thap tat ca dong co du lieu hop le o cot thong tin duoc chon
+        // Buoc 1: Tim moc thoi gian nhan du lieu moi nhat so voi thoi gian thuc tren toan bang
+        let latestTs = -Infinity;
+        let fallbackLatestTs = -Infinity;
+        if (timeColIdx >= 0) {
+          for (let i = 0; i < state.rows.length; i++) {
+            const ts = parseVietnameseDateTime(state.rows[i][timeColIdx]);
+            if (Number.isNaN(ts)) continue;
+            if (ts <= nowMs && ts > latestTs) {
+              latestTs = ts;
+            }
+            if (ts > fallbackLatestTs) {
+              fallbackLatestTs = ts;
+            }
+          }
+          if (latestTs === -Infinity && fallbackLatestTs !== -Infinity) {
+            latestTs = fallbackLatestTs;
+          }
+        }
+
+        // Buoc 2: Tinh moc gioi han 3 ngay tro lai (VD: moi nhat ngay 22 -> chi loc tu 00:00:00 ngay 19 den ngay 22)
+        let cutoffMs = -Infinity;
+        let dateRangeLabel = '';
+        if (latestTs !== -Infinity) {
+          const latestDate = new Date(latestTs);
+          const cutoffDate = new Date(
+            latestDate.getFullYear(),
+            latestDate.getMonth(),
+            latestDate.getDate() - 3,
+            0, 0, 0, 0
+          );
+          cutoffMs = cutoffDate.getTime();
+          dateRangeLabel = `${formatDateVN(cutoffMs)} – ${formatDateVN(latestTs)}`;
+        }
+
+        // Buoc 3: Loc cac ban ghi nam trong khoang 3 ngay gan nhat va co du lieu hop le o cot thong tin duoc chon
         const candidates = [];
         for (let i = 0; i < state.rows.length; i++) {
           const row = state.rows[i];
           const valRaw = row[colIdx] !== undefined ? row[colIdx] : '';
           if (!hasFieldData(valRaw)) continue;
 
+          const ts = timeColIdx >= 0 ? parseVietnameseDateTime(row[timeColIdx]) : NaN;
+          if (latestTs !== -Infinity) {
+            if (Number.isNaN(ts) || ts < cutoffMs || ts > latestTs) continue;
+          }
+
           const studentName = nameColIdx >= 0 ? normSpaces(row[nameColIdx]) : `Dòng ${i + 1}`;
           if (nameColIdx >= 0 && !studentName) continue;
 
-          const ts = timeColIdx >= 0 ? parseVietnameseDateTime(row[timeColIdx]) : NaN;
           const timeText = timeColIdx >= 0 ? normSpaces(row[timeColIdx]) : '';
           const numVal = parseNumericMetric(valRaw);
+
+          const deductRaw = deductColIdx >= 0 ? normSpaces(row[deductColIdx]) : '';
+          const deductNum = deductColIdx >= 0 ? parseNumericMetric(deductRaw) : NaN;
+          const deductAbs = !Number.isNaN(deductNum) ? Math.abs(deductNum) : -Infinity;
 
           candidates.push({
             rowIndex: i,
@@ -2015,24 +2082,17 @@
             studentName,
             valRaw: normSpaces(valRaw),
             numVal,
+            deductRaw,
+            deductAbs,
             ts,
             timeText
           });
         }
 
-        // Uu tien cac ban ghi co thoi gian nhan <= thoi gian thuc (neu co)
-        let validPool = candidates;
-        if (timeColIdx >= 0) {
-          const pastOrNow = candidates.filter(c => !Number.isNaN(c.ts) && c.ts <= nowMs);
-          if (pastOrNow.length > 0) {
-            validPool = pastOrNow;
-          }
-        }
-
-        // Moi hoc sinh chi giu ban ghi co thoi gian nhan moi nhat so voi thoi gian thuc
+        // Buoc 4: Moi hoc sinh trong khoang 3 ngay chi giu ban ghi co thoi gian nhan moi nhat
         const latestByStudent = new Map();
-        for (let i = 0; i < validPool.length; i++) {
-          const item = validPool[i];
+        for (let i = 0; i < candidates.length; i++) {
+          const item = candidates[i];
           const prev = latestByStudent.get(item.studentKey);
           if (!prev) {
             latestByStudent.set(item.studentKey, item);
@@ -2049,7 +2109,7 @@
           }
         }
 
-        // Xep hang so lieu tu cao toi thap; neu bang nhau thi uu tien thoi gian nhan moi nhat
+        // Buoc 5: Xep tu cao toi thap; neu bang so lieu thi uu tien tong diem tru cao hon xep vi tri cao hon
         const ranked = Array.from(latestByStudent.values()).sort((a, b) => {
           const aNum = !Number.isNaN(a.numVal);
           const bNum = !Number.isNaN(b.numVal);
@@ -2058,6 +2118,12 @@
           }
           if (aNum !== bNum) return aNum ? -1 : 1;
 
+          // Uu tien theo tong diem tru khi bang so lieu
+          if (b.deductAbs !== a.deductAbs) {
+            return b.deductAbs - a.deductAbs;
+          }
+
+          // Neu van bang nhau thi uu tien thoi gian nhan moi hon
           const aTs = !Number.isNaN(a.ts) ? a.ts : -Infinity;
           const bTs = !Number.isNaN(b.ts) ? b.ts : -Infinity;
           if (bTs !== aTs) return bTs - aTs;
@@ -2065,38 +2131,50 @@
           return a.studentName.localeCompare(b.studentName, 'vi');
         });
 
-        const top10 = ranked.slice(0, 10);
+        // Lay toi da 10 ket qua (neu khong du 10 thi co bao nhieu hien thi bay nhieu)
+        const topList = ranked.slice(0, 10);
         state.lastSearchMode = 'top10';
         state.lastSearchColIdx = colIdx;
         state.lastSearchQuery = '';
-        state.searchMatches = top10.map(item => ({ rowIndex: item.rowIndex, row: item.row }));
+        state.searchMatches = topList.map(item => ({ rowIndex: item.rowIndex, row: item.row }));
 
-        renderTop10ResultSection(colIdx, top10, ranked.length);
+        renderTop10ResultSection(colIdx, topList, ranked.length, dateRangeLabel);
       }
 
-      function renderTop10ResultSection(colIdx, top10, totalStudents) {
+      function renderTop10ResultSection(colIdx, topList, totalStudents, dateRangeLabel) {
         const colName = state.headers[colIdx] || `Cột ${colIdx + 1}`;
+        const rangeInfo = dateRangeLabel ? ` • ${dateRangeLabel}` : '';
         el.searchResultSection.classList.remove('hidden');
-        el.searchResultTitle.innerHTML = `🏆 Top ${top10.length} cao nhất — "<em>${escapeHtml(colName)}</em>" (mới nhất / ${totalStudents} HS có dữ liệu)`;
-        el.btnExportSearchCsv.disabled = top10.length === 0;
+        el.searchResultTitle.innerHTML = `🏆 Top ${topList.length} cao nhất — "<em>${escapeHtml(colName)}</em>" (${totalStudents} HS${escapeHtml(rangeInfo)})`;
+        el.btnExportSearchCsv.disabled = topList.length === 0;
 
-        if (top10.length === 0) {
-          el.searchResultBody.innerHTML = `<div class="empty-state">Không có học sinh nào có dữ liệu ở cột <strong>"${escapeHtml(colName)}"</strong>.</div>`;
+        if (topList.length === 0) {
+          const rangeText = dateRangeLabel ? ` trong 3 ngày gần nhất (${escapeHtml(dateRangeLabel)})` : '';
+          el.searchResultBody.innerHTML = `<div class="empty-state">Không có học sinh nào có dữ liệu ở cột <strong>"${escapeHtml(colName)}"</strong>${rangeText}.</div>`;
           return;
         }
 
-        const listHtml = top10.map((item, idx) => {
+        const showDeduct = state.deductColIdx >= 0 && state.deductColIdx !== colIdx;
+        const deductLabel = showDeduct ? (state.headers[state.deductColIdx] || 'Tổng trừ') : '';
+
+        const listHtml = topList.map((item, idx) => {
           const rankNum = idx + 1;
           const rankClass = rankNum <= 3 ? ` rank-${rankNum}` : '';
-          const timeSub = item.timeText
-            ? `<div class="top10-time">🕒 ${escapeHtml(item.timeText)}</div>`
+          const metaParts = [];
+          if (item.timeText) metaParts.push(`🕒 ${escapeHtml(item.timeText)}`);
+          if (showDeduct && hasFieldData(item.deductRaw)) {
+            metaParts.push(`📉 ${escapeHtml(deductLabel)}: <strong>${escapeHtml(item.deductRaw)}</strong>`);
+          }
+          const metaSub = metaParts.length
+            ? `<div class="top10-time">${metaParts.join(' • ')}</div>`
             : '';
+
           return `
             <div class="top10-item">
               <span class="top10-rank${rankClass}">${rankNum}</span>
               <div class="top10-info">
                 <div class="top10-name">${escapeHtml(item.studentName)}</div>
-                ${timeSub}
+                ${metaSub}
               </div>
               <span class="top10-val" title="${escapeHtml(item.valRaw)}">${escapeHtml(item.valRaw)}</span>
               <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Chi tiết</button>
@@ -2378,6 +2456,7 @@
         state.longColFlags = [];
         state.nameColFlags = [];
         state.timeColIdx = -1;
+        state.deductColIdx = -1;
         state.currentPage = 1;
         state.lastLoadedAt = 0;
 
