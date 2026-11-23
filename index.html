@@ -387,6 +387,87 @@
       white-space: pre-wrap;
     }
 
+    /* Danh sach Top 10 theo cot thong tin */
+    .top10-list {
+      display: grid;
+      gap: 7px;
+    }
+
+    .top10-item {
+      display: grid;
+      grid-template-columns: 32px 1fr auto auto;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 10px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .top10-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: #334155;
+      flex-shrink: 0;
+    }
+
+    .top10-rank.rank-1 {
+      background: #fef08a;
+      color: #854d0e;
+      border: 1px solid #eab308;
+    }
+
+    .top10-rank.rank-2 {
+      background: #e2e8f0;
+      color: #1e293b;
+      border: 1px solid #94a3b8;
+    }
+
+    .top10-rank.rank-3 {
+      background: #fed7aa;
+      color: #9a3412;
+      border: 1px solid #f97316;
+    }
+
+    .top10-info {
+      min-width: 0;
+    }
+
+    .top10-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-word;
+    }
+
+    .top10-time {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .top10-val {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      white-space: nowrap;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* Tieu de dong dau tien tach rieng dat ngay duoi cho "Hien thi" va phia tren bang Excel */
     .sheet-banner-box {
       background: #eef4ff;
@@ -769,7 +850,7 @@
         <input
           type="text"
           id="searchInput"
-          placeholder="Nhập chính xác họ tên hoặc thông tin cần tìm..."
+          placeholder="Nhập họ tên cần tìm (hoặc để trống & chọn cột để lọc Top 10)..."
           autocomplete="off"
           autocorrect="off"
           autocapitalize="off"
@@ -910,8 +991,11 @@
         rows: [],
         longColFlags: [],
         nameColFlags: [],
+        timeColIdx: -1,
         searchMatches: [],
         lastSearchQuery: '',
+        lastSearchMode: '', // '' | 'strict' | 'top10'
+        lastSearchColIdx: -1,
         currentPage: 1,
         pageSize: 100,
         pendingSavePayload: null,
@@ -1632,6 +1716,95 @@
         return headers.map(h => /(ho ten|ho va ten|ten hs|hoc sinh)/.test(normalizeText(h)));
       }
 
+      // Phan tich chuoi thoi gian (ho tro dd/mm/yyyy hh:mm:ss, yyyy-mm-dd hh:mm:ss, mm/dd/yyyy...)
+      function parseVietnameseDateTime(val) {
+        const s = normSpaces(val);
+        if (!s) return NaN;
+
+        // Dang dd/mm/yyyy [hh:mm[:ss]] hoac dd-mm-yyyy
+        const dmy = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+        if (dmy) {
+          let p1 = Number(dmy[1]);
+          let p2 = Number(dmy[2]);
+          let year = Number(dmy[3]);
+          if (year < 100) year += 2000;
+          let day = p1;
+          let month = p2;
+          // Neu dang MM/DD/YYYY (thang <= 12 va ngay > 12) thi tu dong hoan doi
+          if (p1 <= 12 && p2 > 12) {
+            month = p1;
+            day = p2;
+          }
+          const hh = dmy[4] !== undefined ? Number(dmy[4]) : 0;
+          const mm = dmy[5] !== undefined ? Number(dmy[5]) : 0;
+          const ss = dmy[6] !== undefined ? Number(dmy[6]) : 0;
+          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            const dt = new Date(year, month - 1, day, hh, mm, ss);
+            if (!Number.isNaN(dt.getTime())) return dt.getTime();
+          }
+        }
+
+        // Dang yyyy-mm-dd [hh:mm[:ss]]
+        const ymd = s.match(/^(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+        if (ymd) {
+          const dt = new Date(
+            Number(ymd[1]),
+            Number(ymd[2]) - 1,
+            Number(ymd[3]),
+            ymd[4] !== undefined ? Number(ymd[4]) : 0,
+            ymd[5] !== undefined ? Number(ymd[5]) : 0,
+            ymd[6] !== undefined ? Number(ymd[6]) : 0
+          );
+          if (!Number.isNaN(dt.getTime())) return dt.getTime();
+        }
+
+        const fallback = Date.parse(s);
+        return Number.isNaN(fallback) ? NaN : fallback;
+      }
+
+      function detectTimeColumnIndex(headers, rows) {
+        // Uu tien nhan dien theo tieu de cot
+        for (let i = 0; i < headers.length; i++) {
+          const hNorm = normalizeText(headers[i]);
+          if (/(thoi gian nhan|thoi gian|timestamp|ngay nhan|ngay gui|ngay cap nhat|ngay)/.test(hNorm)) {
+            return i;
+          }
+        }
+        // Du phong: kiem tra du lieu 20 dong dau
+        const sampleLimit = Math.min(20, rows.length);
+        for (let c = 0; c < headers.length; c++) {
+          let nonEmpty = 0;
+          let parsedOk = 0;
+          for (let r = 0; r < sampleLimit; r++) {
+            const v = normSpaces(rows[r][c]);
+            if (!v) continue;
+            nonEmpty++;
+            if (!Number.isNaN(parseVietnameseDateTime(v))) parsedOk++;
+          }
+          if (nonEmpty >= 2 && (parsedOk / nonEmpty) >= 0.6) return c;
+        }
+        return -1;
+      }
+
+      // Lay gia tri so de xep hang tu cao toi thap
+      function parseNumericMetric(val) {
+        const s = normSpaces(val);
+        if (!s) return NaN;
+
+        // Kiem tra so thuan (ho tro dau phay thap phan kieu Viet nhu 8,5)
+        if (/^-?\d+(?:[.,]\d+)?$/.test(s)) {
+          return Number(s.replace(',', '.'));
+        }
+        // So co dau phan cach hang nghin (VD: 1,200 hoac 1.200)
+        if (/^-?\d{1,3}(?:,\d{3})+(?:\.\d+)?$/.test(s)) {
+          return Number(s.replace(/,/g, ''));
+        }
+        // Trich so dau tien trong chuoi (VD: "5 lan", "9,5 diem")
+        const m = s.match(/-?\d+(?:[.,]\d+)?/);
+        if (m) return Number(m[0].replace(',', '.'));
+        return NaN;
+      }
+
       function buildTheadHtml(headerRows, numCols, nameColFlags) {
         const H = headerRows.length;
         if (H === 0 || numCols === 0) return '';
@@ -1696,12 +1869,15 @@
         state.rows = parsed.dataRows;
         state.longColFlags = detectLongDataColumns(state.headers, state.rows);
         state.nameColFlags = detectNameColumns(state.headers);
+        state.timeColIdx = detectTimeColumnIndex(state.headers, state.rows);
 
         renderBannerBox();
         populateColumnFilter();
         renderExcelTable();
 
-        if (state.lastSearchQuery) {
+        if (state.lastSearchMode === 'top10' && state.lastSearchColIdx >= 0 && state.lastSearchColIdx < state.headers.length) {
+          executeTop10ByColumn(state.lastSearchColIdx, true);
+        } else if (state.lastSearchQuery) {
           executeStrictSearch(true);
         }
       }
@@ -1797,14 +1973,153 @@
         return escapedText;
       }
 
+      // Loc Top 10 ten co so lieu cao nhat theo cot thong tin chon & thoi gian nhan moi nhat so voi thoi gian thuc
+      function executeTop10ByColumn(colIdx, isSilentRefresh = false) {
+        if (!state.rows.length) {
+          if (!isSilentRefresh) {
+            showToast('Chưa có dữ liệu. Hãy tải link Google Sheets trước.');
+          }
+          return;
+        }
+
+        if (state.nameColFlags[colIdx]) {
+          if (!isSilentRefresh) {
+            showToast('Hãy nhập họ tên cần tìm hoặc chọn 1 cột thông tin khác để lọc Top 10.');
+            el.searchInput.focus();
+          }
+          return;
+        }
+
+        const nowMs = Date.now();
+        const nameColIdx = state.nameColFlags.findIndex(Boolean);
+        const timeColIdx = state.timeColIdx;
+
+        // Thu thap tat ca dong co du lieu hop le o cot thong tin duoc chon
+        const candidates = [];
+        for (let i = 0; i < state.rows.length; i++) {
+          const row = state.rows[i];
+          const valRaw = row[colIdx] !== undefined ? row[colIdx] : '';
+          if (!hasFieldData(valRaw)) continue;
+
+          const studentName = nameColIdx >= 0 ? normSpaces(row[nameColIdx]) : `Dòng ${i + 1}`;
+          if (nameColIdx >= 0 && !studentName) continue;
+
+          const ts = timeColIdx >= 0 ? parseVietnameseDateTime(row[timeColIdx]) : NaN;
+          const timeText = timeColIdx >= 0 ? normSpaces(row[timeColIdx]) : '';
+          const numVal = parseNumericMetric(valRaw);
+
+          candidates.push({
+            rowIndex: i,
+            row,
+            studentKey: nameColIdx >= 0 ? normalizeText(studentName) : `row_${i}`,
+            studentName,
+            valRaw: normSpaces(valRaw),
+            numVal,
+            ts,
+            timeText
+          });
+        }
+
+        // Uu tien cac ban ghi co thoi gian nhan <= thoi gian thuc (neu co)
+        let validPool = candidates;
+        if (timeColIdx >= 0) {
+          const pastOrNow = candidates.filter(c => !Number.isNaN(c.ts) && c.ts <= nowMs);
+          if (pastOrNow.length > 0) {
+            validPool = pastOrNow;
+          }
+        }
+
+        // Moi hoc sinh chi giu ban ghi co thoi gian nhan moi nhat so voi thoi gian thuc
+        const latestByStudent = new Map();
+        for (let i = 0; i < validPool.length; i++) {
+          const item = validPool[i];
+          const prev = latestByStudent.get(item.studentKey);
+          if (!prev) {
+            latestByStudent.set(item.studentKey, item);
+          } else {
+            const prevHasTs = !Number.isNaN(prev.ts);
+            const curHasTs = !Number.isNaN(item.ts);
+            if (curHasTs && (!prevHasTs || item.ts > prev.ts)) {
+              latestByStudent.set(item.studentKey, item);
+            } else if ((!curHasTs && !prevHasTs) || (curHasTs && prevHasTs && item.ts === prev.ts)) {
+              if (item.rowIndex > prev.rowIndex) {
+                latestByStudent.set(item.studentKey, item);
+              }
+            }
+          }
+        }
+
+        // Xep hang so lieu tu cao toi thap; neu bang nhau thi uu tien thoi gian nhan moi nhat
+        const ranked = Array.from(latestByStudent.values()).sort((a, b) => {
+          const aNum = !Number.isNaN(a.numVal);
+          const bNum = !Number.isNaN(b.numVal);
+          if (aNum && bNum && b.numVal !== a.numVal) {
+            return b.numVal - a.numVal;
+          }
+          if (aNum !== bNum) return aNum ? -1 : 1;
+
+          const aTs = !Number.isNaN(a.ts) ? a.ts : -Infinity;
+          const bTs = !Number.isNaN(b.ts) ? b.ts : -Infinity;
+          if (bTs !== aTs) return bTs - aTs;
+
+          return a.studentName.localeCompare(b.studentName, 'vi');
+        });
+
+        const top10 = ranked.slice(0, 10);
+        state.lastSearchMode = 'top10';
+        state.lastSearchColIdx = colIdx;
+        state.lastSearchQuery = '';
+        state.searchMatches = top10.map(item => ({ rowIndex: item.rowIndex, row: item.row }));
+
+        renderTop10ResultSection(colIdx, top10, ranked.length);
+      }
+
+      function renderTop10ResultSection(colIdx, top10, totalStudents) {
+        const colName = state.headers[colIdx] || `Cột ${colIdx + 1}`;
+        el.searchResultSection.classList.remove('hidden');
+        el.searchResultTitle.innerHTML = `🏆 Top ${top10.length} cao nhất — "<em>${escapeHtml(colName)}</em>" (mới nhất / ${totalStudents} HS có dữ liệu)`;
+        el.btnExportSearchCsv.disabled = top10.length === 0;
+
+        if (top10.length === 0) {
+          el.searchResultBody.innerHTML = `<div class="empty-state">Không có học sinh nào có dữ liệu ở cột <strong>"${escapeHtml(colName)}"</strong>.</div>`;
+          return;
+        }
+
+        const listHtml = top10.map((item, idx) => {
+          const rankNum = idx + 1;
+          const rankClass = rankNum <= 3 ? ` rank-${rankNum}` : '';
+          const timeSub = item.timeText
+            ? `<div class="top10-time">🕒 ${escapeHtml(item.timeText)}</div>`
+            : '';
+          return `
+            <div class="top10-item">
+              <span class="top10-rank${rankClass}">${rankNum}</span>
+              <div class="top10-info">
+                <div class="top10-name">${escapeHtml(item.studentName)}</div>
+                ${timeSub}
+              </div>
+              <span class="top10-val" title="${escapeHtml(item.valRaw)}">${escapeHtml(item.valRaw)}</span>
+              <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Chi tiết</button>
+            </div>
+          `;
+        }).join('');
+
+        el.searchResultBody.innerHTML = `<div class="top10-list">${listHtml}</div>`;
+      }
+
       function executeStrictSearch(isSilentRefresh = false) {
         const queryRaw = (isSilentRefresh ? state.lastSearchQuery : el.searchInput.value).trim();
-        state.lastSearchQuery = queryRaw;
+        const colFilterVal = el.columnFilter.value;
 
+        // Neu bo trong o nhap ho ten nhung da chon 1 cot thong tin cu the -> loc Top 10 cao nhat theo thoi gian nhan moi nhat
         if (!queryRaw) {
+          if (colFilterVal !== 'all') {
+            executeTop10ByColumn(Number(colFilterVal), isSilentRefresh);
+            return;
+          }
           closeSearchResultSection();
           if (!isSilentRefresh) {
-            showToast('Vui lòng nhập thông tin cần tìm.');
+            showToast('Nhập họ tên cần tìm hoặc chọn 1 cột thông tin để lọc Top 10.');
             el.searchInput.focus();
           }
           return;
@@ -1817,15 +2132,18 @@
           return;
         }
 
+        state.lastSearchMode = 'strict';
+        state.lastSearchColIdx = colFilterVal === 'all' ? -1 : Number(colFilterVal);
+        state.lastSearchQuery = queryRaw;
+
         const queryNorm = normalizeText(queryRaw);
-        const colIdx = el.columnFilter.value;
         const exactFullCell = el.optExactCell.checked;
 
         const matches = [];
         for (let i = 0; i < state.rows.length; i++) {
           const row = state.rows[i];
           let matched = false;
-          if (colIdx === 'all') {
+          if (colFilterVal === 'all') {
             for (let c = 0; c < state.headers.length; c++) {
               if (isCellStrictMatch(row[c], queryNorm, exactFullCell)) {
                 matched = true;
@@ -1833,7 +2151,7 @@
               }
             }
           } else {
-            matched = isCellStrictMatch(row[Number(colIdx)], queryNorm, exactFullCell);
+            matched = isCellStrictMatch(row[Number(colFilterVal)], queryNorm, exactFullCell);
           }
 
           if (matched) {
@@ -1896,6 +2214,8 @@
       function closeSearchResultSection() {
         state.searchMatches = [];
         state.lastSearchQuery = '';
+        state.lastSearchMode = '';
+        state.lastSearchColIdx = -1;
         el.searchResultSection.classList.add('hidden');
         el.searchResultBody.innerHTML = '';
         el.btnExportSearchCsv.disabled = true;
@@ -2057,6 +2377,7 @@
         state.rows = [];
         state.longColFlags = [];
         state.nameColFlags = [];
+        state.timeColIdx = -1;
         state.currentPage = 1;
         state.lastLoadedAt = 0;
 
@@ -2236,10 +2557,16 @@
       el.optExactCell.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(false); });
       el.optNoAccent.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(false); });
       el.optHideEmptyFields.addEventListener('change', () => {
-        if (state.lastSearchQuery) renderSearchResultSection(state.lastSearchQuery, state.searchMatches);
+        if (state.lastSearchMode === 'strict' && state.lastSearchQuery) {
+          renderSearchResultSection(state.lastSearchQuery, state.searchMatches);
+        }
       });
       el.optHideZeroAndNone.addEventListener('change', () => {
-        if (state.lastSearchQuery) renderSearchResultSection(state.lastSearchQuery, state.searchMatches);
+        if (state.lastSearchMode === 'top10' && state.lastSearchColIdx >= 0) {
+          executeTop10ByColumn(state.lastSearchColIdx, true);
+        } else if (state.lastSearchQuery) {
+          renderSearchResultSection(state.lastSearchQuery, state.searchMatches);
+        }
       });
 
       el.searchResultBody.addEventListener('click', (e) => {
