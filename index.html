@@ -393,7 +393,7 @@
       white-space: pre-wrap;
     }
 
-    /* Bang du lieu goc giong Excel: giu nguyen thiet ke trang goc, thu nho cot tieu de */
+    /* Bang du lieu goc: hien thi nguyen noi dung goc, thu nho kich thuoc can doi, khong mat hay bien dang tieu de */
     .table-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -407,7 +407,7 @@
 
     .table-wrapper {
       overflow: auto;
-      max-height: 72vh;
+      max-height: 74vh;
       border: 1px solid var(--border);
       border-radius: 6px;
       background: #fff;
@@ -418,7 +418,8 @@
       width: max-content;
       min-width: 100%;
       border-collapse: collapse;
-      font-size: 0.83rem;
+      table-layout: auto;
+      font-size: 0.78rem;
       background: #fff;
     }
 
@@ -433,16 +434,22 @@
       color: #fff;
       text-align: center;
       vertical-align: middle;
-      padding: 4px 6px;
+      padding: 5px 8px;
       font-weight: 600;
-      font-size: 0.71rem;
-      line-height: 1.18;
+      font-size: 0.74rem;
+      line-height: 1.25;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255, 255, 255, 0.28);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+    }
+
+    /* Tieu de cot qua dai tu dong xuong dong gon gang theo tu, khong cat chu */
+    table.excel-table thead th.th-wrap {
       white-space: normal;
-      word-break: break-word;
-      max-width: 128px;
-      min-width: 44px;
-      border-right: 1px solid rgba(255, 255, 255, 0.22);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      min-width: 96px;
+      max-width: 190px;
+      word-break: normal;
+      overflow-wrap: break-word;
     }
 
     table.excel-table thead tr:last-child th {
@@ -455,52 +462,26 @@
       font-size: 0.78rem;
       font-weight: 700;
       padding: 6px 10px;
-      max-width: none;
       text-align: left;
-    }
-
-    table.excel-table thead th.col-long-header {
-      max-width: 135px;
-      font-size: 0.69rem;
+      white-space: normal;
     }
 
     table.excel-table tbody td {
-      padding: 5px 8px;
-      border-right: 1px solid #e2e8f0;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 4px 8px;
+      border-right: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
       vertical-align: middle;
       line-height: 1.3;
-    }
-
-    table.excel-table tbody td.col-compact {
       white-space: nowrap;
+      color: #1f2937;
     }
 
-    table.excel-table tbody td.col-rowspan {
-      background: #ffffff;
-      font-weight: 600;
-      color: #0f172a;
-      vertical-align: middle;
-      text-align: center;
-    }
-
-    /* Cot nhieu noi dung: thu nho chu + an bot de hang gon, hien thi duoc nhieu ten */
-    table.excel-table tbody td.col-long {
-      font-size: 0.73rem;
-      line-height: 1.22;
-      color: #475569;
-      max-width: 170px;
-      min-width: 110px;
-      padding: 4px 7px;
-    }
-
-    .cell-clamp {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      word-break: break-word;
+    table.excel-table tbody td.td-wrap {
+      white-space: normal;
+      min-width: 120px;
+      max-width: 260px;
+      word-break: normal;
+      overflow-wrap: break-word;
     }
 
     table.excel-table tbody tr:nth-child(even) {
@@ -513,17 +494,18 @@
     }
 
     .col-stt {
-      width: 40px;
-      min-width: 40px !important;
-      max-width: 40px !important;
+      width: 38px;
+      min-width: 38px !important;
+      max-width: 38px !important;
       text-align: center !important;
       color: var(--muted);
       font-weight: 600;
-      font-size: 0.76rem;
+      font-size: 0.73rem;
       background: #f1f5f9;
       position: sticky;
       left: 0;
       z-index: 2;
+      padding: 4px 4px !important;
     }
 
     table.excel-table thead th.col-stt {
@@ -812,7 +794,7 @@
       <div id="searchResultBody"></div>
     </section>
 
-    <!-- 3 & 4. Bang du lieu tong hop goc (giu nguyen thiet ke trang goc, thu nho cac cot tieu de cho phu hop hien thi) -->
+    <!-- 3. Bang du lieu tong hop goc (hien thi nguyen noi dung goc, thu nho can doi, khong bien dang hay mat tieu de) -->
     <section class="card" id="excelSection">
       <div class="section-header">
         <div class="section-title">📋 Bảng dữ liệu gốc (Tổng hợp Excel)</div>
@@ -822,7 +804,7 @@
       </div>
 
       <div class="table-toolbar">
-        <span id="tableMetaInfo">Giữ nguyên thiết kế trang gốc (thu nhỏ cột tiêu đề cho gọn) — chạm vào dòng để xem đủ.</span>
+        <span id="tableMetaInfo">Hiển thị nguyên nội dung gốc từ link dữ liệu (thu nhỏ cân đối) — chạm vào dòng để xem chi tiết.</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <label for="pageSize">Hiển thị:</label>
           <select id="pageSize" style="width:auto;min-height:32px;padding:3px 8px;font-size:0.82rem;">
@@ -895,11 +877,11 @@
         mode: '',
         rawCols: [],
         rawRows: [],
-        headerRows: [], // Cac dong tieu de goc o dau trang tinh
-        headers: [],    // Nhan cot dung cho tim kiem & chi tiet
-        rows: [],       // Cac dong du lieu ben duoi tieu de
-        longColFlags: [],
-        rowspanColFlags: [],
+        headerRows: [],
+        headers: [],
+        rows: [],
+        dataStartRowIndex: 0,
+        wrapColFlags: [],
         searchMatches: [],
         lastSearchQuery: '',
         currentPage: 1,
@@ -1213,10 +1195,74 @@
         }
       }
 
+      // Uu tien Export CSV & GViz CSV truoc de giu nguyen 100% chu tieu de o cac cot so (tranh GViz JSON chuyen tieu de thanh null)
+      async function tryFetchExportCsv(parsed, sheetName) {
+        const customSheet = (sheetName || '').trim();
+        if (customSheet && !/^\d+$/.test(customSheet)) {
+          throw new Error('Export CSV chi ho tro GID so');
+        }
+        const params = new URLSearchParams({
+          format: 'csv',
+          _nocache: makeCacheBusterToken()
+        });
+        if (customSheet && /^\d+$/.test(customSheet)) {
+          params.set('gid', customSheet);
+        } else if (parsed.gid) {
+          params.set('gid', parsed.gid);
+        }
+        const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/export?${params.toString()}`;
+
+        const text = await fetchWithTimeout(url);
+        if (isLoginOrHtml(text)) {
+          const err = new Error('PRIVATE_SHEET');
+          err.code = 'PRIVATE_SHEET';
+          throw err;
+        }
+
+        const matrix = parseCsv(text);
+        const maxCols = matrix.reduce((m, r) => Math.max(m, r.length), 0);
+        const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
+        const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
+
+        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'Export CSV' };
+      }
+
+      async function tryFetchGvizCsv(parsed, sheetName) {
+        let url = '';
+        if (parsed.type === 'pub') {
+          const p = new URLSearchParams({
+            output: 'csv',
+            _nocache: makeCacheBusterToken()
+          });
+          if (parsed.gid) {
+            p.set('gid', parsed.gid);
+            p.set('single', 'true');
+          }
+          url = `https://docs.google.com/spreadsheets/d/e/${encodeURIComponent(parsed.id)}/pub?${p.toString()}`;
+        } else {
+          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:csv' }), parsed.gid, sheetName);
+          url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
+        }
+
+        const text = await fetchWithTimeout(url);
+        if (isLoginOrHtml(text)) {
+          const err = new Error('PRIVATE_SHEET');
+          err.code = 'PRIVATE_SHEET';
+          throw err;
+        }
+
+        const matrix = parseCsv(text);
+        const maxCols = matrix.reduce((m, r) => Math.max(m, r.length), 0);
+        const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
+        const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
+
+        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'GViz CSV' };
+      }
+
       async function tryFetchGvizJson(parsed, sheetName) {
         const reqId = String(Date.now());
         const params = buildSheetParams(
-          new URLSearchParams({ tqx: `out:json;reqId:${reqId}`, headers: '0' }),
+          new URLSearchParams({ tqx: `out:json;reqId:${reqId}` }),
           parsed.gid,
           sheetName
         );
@@ -1251,61 +1297,6 @@
         });
 
         return { mode: 'gviz', rawCols: cols, rawRows: rows, source: 'GViz JSON' };
-      }
-
-      async function tryFetchGvizCsv(parsed, sheetName) {
-        let url = '';
-        if (parsed.type === 'pub') {
-          const p = new URLSearchParams({
-            output: 'csv',
-            _nocache: makeCacheBusterToken()
-          });
-          if (parsed.gid) {
-            p.set('gid', parsed.gid);
-            p.set('single', 'true');
-          }
-          url = `https://docs.google.com/spreadsheets/d/e/${encodeURIComponent(parsed.id)}/pub?${p.toString()}`;
-        } else {
-          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:csv', headers: '0' }), parsed.gid, sheetName);
-          url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
-        }
-
-        const text = await fetchWithTimeout(url);
-        if (isLoginOrHtml(text)) {
-          const err = new Error('PRIVATE_SHEET');
-          err.code = 'PRIVATE_SHEET';
-          throw err;
-        }
-
-        const matrix = parseCsv(text);
-        const maxCols = matrix.reduce((m, r) => Math.max(m, r.length), 0);
-        const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
-        const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
-
-        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'CSV' };
-      }
-
-      async function tryFetchExportCsv(parsed) {
-        const params = new URLSearchParams({
-          format: 'csv',
-          _nocache: makeCacheBusterToken()
-        });
-        if (parsed.gid) params.set('gid', parsed.gid);
-        const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/export?${params.toString()}`;
-
-        const text = await fetchWithTimeout(url);
-        if (isLoginOrHtml(text)) {
-          const err = new Error('PRIVATE_SHEET');
-          err.code = 'PRIVATE_SHEET';
-          throw err;
-        }
-
-        const matrix = parseCsv(text);
-        const maxCols = matrix.reduce((m, r) => Math.max(m, r.length), 0);
-        const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
-        const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
-
-        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'Export CSV' };
       }
 
       function tryJsonpDefault(parsed, sheetName) {
@@ -1357,7 +1348,7 @@
 
           const reqId = String(Date.now());
           const params = buildSheetParams(
-            new URLSearchParams({ tqx: `out:json;reqId:${reqId}`, headers: '0' }),
+            new URLSearchParams({ tqx: `out:json;reqId:${reqId}` }),
             parsed.gid,
             sheetName
           );
@@ -1370,9 +1361,9 @@
         if (parsed.type === 'pub') return await tryFetchGvizCsv(parsed, sheetName);
 
         const errors = [];
-        try { return await tryFetchGvizJson(parsed, sheetName); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('GViz JSON: ' + e.message); }
+        try { return await tryFetchExportCsv(parsed, sheetName); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('Export CSV: ' + e.message); }
         try { return await tryFetchGvizCsv(parsed, sheetName); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('GViz CSV: ' + e.message); }
-        try { return await tryFetchExportCsv(parsed); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('Export CSV: ' + e.message); }
+        try { return await tryFetchGvizJson(parsed, sheetName); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('GViz JSON: ' + e.message); }
         try { return await tryJsonpDefault(parsed, sheetName); } catch (e) { errors.push('JSONP: ' + e.message); }
 
         const err = new Error(errors.join(' | '));
@@ -1380,10 +1371,10 @@
         throw err;
       }
 
-      // Tach phan tieu de goc (giu nguyen thiet ke trang tinh) va phan du lieu ben duoi
+      // Tach phan tieu de goc va phan du lieu ben duoi (giu nguyen 100% tung o theo dung cot, khong gop sai cot)
       function splitOriginalHeaderAndData(rawMatrix) {
         if (!rawMatrix || !rawMatrix.length) {
-          return { headerRows: [], searchLabels: [], dataRows: [] };
+          return { headerRows: [], searchLabels: [], dataRows: [], dataStartRowIndex: 0 };
         }
 
         const rows = rawMatrix.map(r => Array.isArray(r) ? r.slice() : []);
@@ -1391,13 +1382,13 @@
           rows.pop();
         }
         if (!rows.length) {
-          return { headerRows: [], searchLabels: [], dataRows: [] };
+          return { headerRows: [], searchLabels: [], dataRows: [], dataStartRowIndex: 0 };
         }
 
         const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
         const padded = rows.map(r => Array.from({ length: maxCols }, (_, i) => String(r[i] || '').trim()));
 
-        // Bo cac cot hoan toan trong o mep phai
+        // Chi cat bo cac cot hoan toan trong o mep phai ngoai cung
         let lastCol = maxCols - 1;
         while (lastCol > 0 && padded.every(r => r[lastCol] === '')) {
           lastCol--;
@@ -1405,7 +1396,7 @@
         const numCols = lastCol + 1;
         const grid = padded.map(r => r.slice(0, numCols));
 
-        // Xac dinh vi tri bat dau du lieu de giu nguyen toan bo cac dong tieu de goc phia tren
+        // Tim vi tri dong du lieu dau tien
         const maxScan = Math.min(12, grid.length);
         let firstDataRow = -1;
         let seenHeaderCandidate = false;
@@ -1470,11 +1461,10 @@
           if (firstDataRow === -1) firstDataRow = 1;
         }
 
-        // Giu nguyen tat ca cac dong tieu de goc co noi dung o phia tren
         const headerRows = grid.slice(0, firstDataRow).filter(r => r.some(cell => cell !== ''));
         const dataRows = grid.slice(firstDataRow).filter(r => r.some(cell => cell !== ''));
 
-        // Tao nhan cot gop gon chi dung cho bo loc & the ket qua tim kiem
+        // Tao nhan cot dung cho tim kiem: chi lay dung noi dung trong chinh cot c (khong vay muon tu cot khac)
         const nonBannerHeaders = headerRows.filter((row, idx) => {
           const filled = row.filter(Boolean).length;
           const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25) || (numCols === 3 && filled === 1);
@@ -1484,19 +1474,7 @@
         const searchLabels = Array.from({ length: numCols }, (_, c) => {
           const parts = [];
           for (let r = 0; r < nonBannerHeaders.length; r++) {
-            let val = nonBannerHeaders[r][c];
-            // Neu o group header phia tren rong do gop cot tu ben trai sang, tim ten nhom gan nhat ben trai
-            if (!val && r < nonBannerHeaders.length - 1) {
-              for (let left = c - 1; left >= 0; left--) {
-                if (nonBannerHeaders[r][left] !== '') {
-                  // Chi lay neu phia duoi co tieu de con
-                  if (nonBannerHeaders[nonBannerHeaders.length - 1][c] !== '') {
-                    val = nonBannerHeaders[r][left];
-                  }
-                  break;
-                }
-              }
-            }
+            const val = nonBannerHeaders[r][c];
             if (val && parts[parts.length - 1] !== val) {
               parts.push(val);
             }
@@ -1504,16 +1482,20 @@
           return parts.length ? parts.join(' - ') : `Cột ${colToExcelLetter(c)}`;
         });
 
-        return { headerRows, searchLabels, dataRows };
+        return {
+          headerRows,
+          searchLabels,
+          dataRows,
+          dataStartRowIndex: headerRows.length
+        };
       }
 
-      // Dựng cấu trúc <thead> giữ nguyên thiết kế ô gộp ngang (colspan) và gộp dọc (rowspan) của trang gốc
-      function buildOriginalTheadHtml(headerRows, numCols, longColFlags) {
+      // Dung <thead> 1:1 theo dung tung cot c (khong tu y gop colspan ngang de tranh tieu de cot nay lan sang cot khac)
+      function buildOriginalTheadHtml(headerRows, numCols) {
         const H = headerRows.length;
         if (H === 0 || numCols === 0) return '';
 
         const grid = headerRows.map(r => Array.from({ length: numCols }, (_, c) => String(r[c] || '').trim()));
-        const visited = Array.from({ length: H }, () => new Array(numCols).fill(false));
         let html = '<thead>';
 
         for (let r = 0; r < H; r++) {
@@ -1527,60 +1509,17 @@
             if (grid[r][c] !== '') nonEmptyCols.push(c);
           }
 
-          // Dong tieu de lon o tren cung (1 o duy nhat): gop ngang toan bo bang nhu trang goc
+          // Chi gop ngang toan bang neu dong tren cung chi co duy nhat 1 o tieu de bao cao (banner)
           if (nonEmptyCols.length === 1 && r === 0 && H > 1) {
-            for (let c = 0; c < numCols; c++) visited[r][c] = true;
             html += `<th colspan="${numCols}" class="excel-banner-th">${escapeHtml(grid[r][nonEmptyCols[0]])}</th></tr>`;
             continue;
           }
 
+          // Tat ca cac dong tieu de cot: moi o nam dung vi tri cot c (1 o = 1 cot)
           for (let c = 0; c < numCols; c++) {
-            if (visited[r][c]) continue;
             const val = grid[r][c];
-
-            if (val === '') {
-              visited[r][c] = true;
-              html += '<th></th>';
-              continue;
-            }
-
-            // Tinh gop cot ngang (colspan) sang cac o trong ben phai
-            let colspan = 1;
-            while (
-              c + colspan < numCols &&
-              !visited[r][c + colspan] &&
-              grid[r][c + colspan] === ''
-            ) {
-              colspan++;
-            }
-
-            // Tinh gop hang doc (rowspan) xuong cac o trong phia duoi
-            let rowspan = 1;
-            while (r + rowspan < H) {
-              let canExtend = true;
-              for (let cc = c; cc < c + colspan; cc++) {
-                if (visited[r + rowspan][cc] || grid[r + rowspan][cc] !== '') {
-                  canExtend = false;
-                  break;
-                }
-              }
-              if (canExtend) rowspan++;
-              else break;
-            }
-
-            for (let rr = r; rr < r + rowspan; rr++) {
-              for (let cc = c; cc < c + colspan; cc++) {
-                visited[rr][cc] = true;
-              }
-            }
-
-            const attrs = [];
-            if (rowspan > 1) attrs.push(`rowspan="${rowspan}"`);
-            if (colspan > 1) attrs.push(`colspan="${colspan}"`);
-            const isLong = colspan === 1 && longColFlags[c];
-            if (isLong) attrs.push('class="col-long-header"');
-
-            html += `<th${attrs.length ? ' ' + attrs.join(' ') : ''}>${escapeHtml(val)}</th>`;
+            const needsWrap = val.length > 22 || val.includes('\n');
+            html += `<th class="${needsWrap ? 'th-wrap' : ''}">${escapeHtml(val)}</th>`;
           }
 
           html += '</tr>';
@@ -1590,12 +1529,10 @@
         return html;
       }
 
-      // Nhan dien cot co nhieu noi dung de tu dong thu nho chu va an bot
-      function detectLongColumns(numCols, rows) {
+      // Nhan dien cot co noi dung dai de cho phep xuong dong tu nhien ma khong cat mat noi dung
+      function detectWrapColumns(numCols, rows) {
         return Array.from({ length: numCols }, (_, colIdx) => {
           let nonEmptyCount = 0;
-          let totalLen = 0;
-          let maxLen = 0;
           let longCellCount = 0;
           let hasNewline = false;
 
@@ -1603,53 +1540,12 @@
             const val = String(rows[i][colIdx] || '').trim();
             if (!val) continue;
             nonEmptyCount++;
-            const len = val.length;
-            totalLen += len;
-            if (len > maxLen) maxLen = len;
-            if (len >= 32) longCellCount++;
+            if (val.length >= 28) longCellCount++;
             if (val.includes('\n')) hasNewline = true;
           }
 
           if (nonEmptyCount === 0) return false;
-          const avgLen = totalLen / nonEmptyCount;
-          const longRatio = longCellCount / nonEmptyCount;
-          return avgLen >= 26 || maxLen >= 48 || longRatio >= 0.25 || hasNewline;
-        });
-      }
-
-      // Nhan dien cot co o gop hang (rowspan) trong du lieu (VD: cot To, Lop, Khoi, Nhom gop nhieu dong)
-      function detectRowspanColumns(headers, rows) {
-        if (rows.length < 2) return headers.map(() => false);
-
-        return headers.map((h, colIdx) => {
-          const firstVal = String(rows[0][colIdx] || '').trim();
-          if (!firstVal || isNumericOrDate(firstVal)) return false;
-
-          const headerNorm = normalizeText(h);
-          if (/(diem|cong|tru|vi pham|loi|ghi chu|stt|ho ten|ho va ten|tong|xep loai)/.test(headerNorm)) {
-            return false;
-          }
-
-          let groupHeadersCount = 0;
-          let trailingBlanksCount = 0;
-          let currentGroupBlanks = 0;
-          let inGroup = false;
-
-          for (let r = 0; r < rows.length; r++) {
-            const val = String(rows[r][colIdx] || '').trim();
-            if (val !== '') {
-              if (isNumericOrDate(val)) return false;
-              if (inGroup && currentGroupBlanks > 0) trailingBlanksCount += currentGroupBlanks;
-              groupHeadersCount++;
-              currentGroupBlanks = 0;
-              inGroup = true;
-            } else if (inGroup) {
-              currentGroupBlanks++;
-            }
-          }
-          if (inGroup && currentGroupBlanks > 0) trailingBlanksCount += currentGroupBlanks;
-
-          return groupHeadersCount >= 1 && trailingBlanksCount >= 2 && trailingBlanksCount >= groupHeadersCount;
+          return hasNewline || (longCellCount / nonEmptyCount) >= 0.2;
         });
       }
 
@@ -1661,8 +1557,8 @@
           state.headerRows = [];
           state.headers = [];
           state.rows = [];
-          state.longColFlags = [];
-          state.rowspanColFlags = [];
+          state.dataStartRowIndex = 0;
+          state.wrapColFlags = [];
           populateColumnFilter();
           renderExcelTable();
           return;
@@ -1677,8 +1573,8 @@
         state.headerRows = parsed.headerRows;
         state.headers = parsed.searchLabels;
         state.rows = parsed.dataRows;
-        state.longColFlags = detectLongColumns(state.headers.length, state.rows);
-        state.rowspanColFlags = detectRowspanColumns(state.headers, state.rows);
+        state.dataStartRowIndex = parsed.dataStartRowIndex;
+        state.wrapColFlags = detectWrapColumns(state.headers.length, state.rows);
 
         populateColumnFilter();
         renderExcelTable();
@@ -1844,17 +1740,7 @@
         const cardsHtml = matches.map((item, idx) => {
           let visibleCount = 0;
           const kvHtml = state.headers.map((h, cIdx) => {
-            let val = item.row[cIdx] !== undefined ? item.row[cIdx] : '';
-            if (!hasFieldData(val) && state.rowspanColFlags[cIdx]) {
-              for (let up = item.rowIndex - 1; up >= 0; up--) {
-                const upVal = state.rows[up][cIdx];
-                if (hasFieldData(upVal)) {
-                  val = upVal;
-                  break;
-                }
-              }
-            }
-
+            const val = item.row[cIdx] !== undefined ? item.row[cIdx] : '';
             const hasData = hasFieldData(val);
             if (hideEmpty && !hasData) return '';
 
@@ -1868,11 +1754,12 @@
           }).join('');
 
           const countTag = hideEmpty ? ` • ${visibleCount}/${totalCols} mục có dữ liệu` : '';
+          const sheetRowNum = state.dataStartRowIndex + item.rowIndex + 1;
 
           return `
             <div class="result-item-card">
               <div class="result-item-head">
-                <span>Kết quả #${idx + 1} (Dòng ${item.rowIndex + 1}${countTag})</span>
+                <span>Kết quả #${idx + 1} (Hàng ${sheetRowNum} trong bảng gốc${countTag})</span>
                 <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Xem đầy đủ</button>
               </div>
               <div class="result-kv-list">
@@ -1901,14 +1788,11 @@
         if (!numCols || total === 0) {
           el.tableWrapper.innerHTML = '<div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>';
           el.paginationBar.style.display = 'none';
-          el.tableMetaInfo.textContent = 'Giữ nguyên thiết kế trang gốc (thu nhỏ cột tiêu đề cho gọn) — chạm vào dòng để xem đủ.';
+          el.tableMetaInfo.textContent = 'Hiển thị nguyên nội dung gốc từ link dữ liệu (thu nhỏ cân đối) — chạm vào dòng để xem chi tiết.';
           return;
         }
 
-        const longCount = state.longColFlags.filter(Boolean).length;
-        el.tableMetaInfo.textContent = longCount > 0
-          ? `Giữ nguyên thiết kế trang gốc, thu nhỏ tiêu đề & rút gọn ${longCount} cột nhiều chữ — chạm vào dòng để xem đủ.`
-          : 'Giữ nguyên thiết kế trang gốc (thu nhỏ cột tiêu đề cho gọn) — chạm vào dòng để xem chi tiết.';
+        el.tableMetaInfo.textContent = `Hiển thị nguyên nội dung gốc (${total.toLocaleString('vi-VN')} hàng × ${numCols} cột, thu nhỏ cân đối) — chạm vào dòng để xem chi tiết.`;
 
         const pageSize = Number(el.pageSize.value);
         state.pageSize = pageSize;
@@ -1919,68 +1803,19 @@
         const end = pageSize === 0 ? total : Math.min(start + pageSize, total);
         const pageRows = state.rows.slice(start, end);
 
-        const spanMatrix = Array.from({ length: pageRows.length }, () => new Array(numCols).fill(1));
-        for (let c = 0; c < numCols; c++) {
-          if (!state.rowspanColFlags[c]) continue;
-          let r = 0;
-          while (r < pageRows.length) {
-            const val = String(pageRows[r][c] || '').trim();
-            if (val !== '') {
-              let span = 1;
-              while (r + span < pageRows.length && String(pageRows[r + span][c] || '').trim() === '') {
-                spanMatrix[r + span][c] = 0;
-                span++;
-              }
-              spanMatrix[r][c] = span;
-              r += span;
-            } else {
-              let inherited = '';
-              for (let up = start + r - 1; up >= 0; up--) {
-                const upVal = String(state.rows[up][c] || '').trim();
-                if (upVal !== '') {
-                  inherited = upVal;
-                  break;
-                }
-              }
-              if (inherited) {
-                pageRows[r] = pageRows[r].slice();
-                pageRows[r][c] = inherited;
-                let span = 1;
-                while (r + span < pageRows.length && String(pageRows[r + span][c] || '').trim() === '') {
-                  spanMatrix[r + span][c] = 0;
-                  span++;
-                }
-                spanMatrix[r][c] = span;
-                r += span;
-              } else {
-                r++;
-              }
-            }
-          }
-        }
-
         let html = '<table class="excel-table">';
-        html += buildOriginalTheadHtml(state.headerRows, numCols, state.longColFlags);
+        html += buildOriginalTheadHtml(state.headerRows, numCols);
         html += '<tbody>';
 
         pageRows.forEach((row, rIdx) => {
           const originIdx = start + rIdx;
-          html += `<tr data-row-idx="${originIdx}"><td class="col-stt">${originIdx + 1}</td>`;
+          const sheetRowNum = state.dataStartRowIndex + originIdx + 1;
+          html += `<tr data-row-idx="${originIdx}"><td class="col-stt">${sheetRowNum}</td>`;
           for (let c = 0; c < numCols; c++) {
-            const span = spanMatrix[rIdx][c];
-            if (span === 0) continue;
-
             const val = row[c] !== undefined ? row[c] : '';
             const safeVal = linkifyEscaped(escapeHtml(val));
-            const rowspanAttr = span > 1 ? ` rowspan="${span}"` : '';
-
-            if (span > 1) {
-              html += `<td class="col-compact col-rowspan"${rowspanAttr}>${safeVal}</td>`;
-            } else if (state.longColFlags[c]) {
-              html += `<td class="col-long" title="${escapeHtml(val)}"><div class="cell-clamp">${safeVal}</div></td>`;
-            } else {
-              html += `<td class="col-compact">${safeVal}</td>`;
-            }
+            const needsWrap = state.wrapColFlags[c] || val.length > 28 || val.includes('\n');
+            html += `<td class="${needsWrap ? 'td-wrap' : ''}">${safeVal}</td>`;
           }
           html += '</tr>';
         });
@@ -2003,21 +1838,13 @@
       function openRowDetail(originIndex, hideEmpty = false) {
         const row = state.rows[originIndex];
         if (!row) return;
+        const sheetRowNum = state.dataStartRowIndex + originIndex + 1;
         el.modalTitle.textContent = hideEmpty
-          ? `Chi tiết có dữ liệu — Dòng #${originIndex + 1}`
-          : `Chi tiết đầy đủ — Dòng #${originIndex + 1}`;
+          ? `Chi tiết có dữ liệu — Hàng #${sheetRowNum}`
+          : `Chi tiết đầy đủ — Hàng #${sheetRowNum}`;
 
         const itemsHtml = state.headers.map((h, i) => {
-          let val = row[i] !== undefined ? row[i] : '';
-          if (!hasFieldData(val) && state.rowspanColFlags[i]) {
-            for (let up = originIndex - 1; up >= 0; up--) {
-              const upVal = state.rows[up][i];
-              if (hasFieldData(upVal)) {
-                val = upVal;
-                break;
-              }
-            }
-          }
+          const val = row[i] !== undefined ? row[i] : '';
           const hasData = hasFieldData(val);
           if (hideEmpty && !hasData) return '';
           return `
@@ -2107,8 +1934,8 @@
         state.headerRows = [];
         state.headers = [];
         state.rows = [];
-        state.longColFlags = [];
-        state.rowspanColFlags = [];
+        state.dataStartRowIndex = 0;
+        state.wrapColFlags = [];
         state.currentPage = 1;
         state.lastLoadedAt = 0;
 
