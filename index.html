@@ -105,8 +105,9 @@
       margin-bottom: 14px;
     }
 
-    .card.hidden {
-      display: none;
+    .card.hidden,
+    .hidden {
+      display: none !important;
     }
 
     .section-header {
@@ -393,7 +394,35 @@
       white-space: pre-wrap;
     }
 
-    /* Bang du lieu goc: hien thi nguyen noi dung goc, thu nho kich thuoc can doi, khong mat hay bien dang tieu de */
+    /* Tieu de dong dau tien tach rieng dat ngay duoi cho "Hien thi" va phia tren bang Excel */
+    .sheet-banner-box {
+      background: #eef4ff;
+      border: 1px solid #bfdbfe;
+      border-left: 4px solid #1e3a5f;
+      border-radius: 7px;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .sheet-banner-main {
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #0f2540;
+      line-height: 1.35;
+      text-wrap: balance;
+    }
+
+    .sheet-banner-sub {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 3px;
+      line-height: 1.3;
+      text-wrap: balance;
+    }
+
+    /* Bang du lieu goc: tieu de lap deu trong o theo chieu doc/nhieu dong, khong keo gian ngang */
     .table-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -434,54 +463,57 @@
       color: #fff;
       text-align: center;
       vertical-align: middle;
-      padding: 5px 8px;
+      padding: 5px 5px;
       font-weight: 600;
-      font-size: 0.74rem;
-      line-height: 1.25;
-      white-space: nowrap;
-      border-right: 1px solid rgba(255, 255, 255, 0.28);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.28);
-    }
-
-    /* Tieu de cot qua dai tu dong xuong dong gon gang theo tu, khong cat chu */
-    table.excel-table thead th.th-wrap {
+      font-size: 0.72rem;
+      line-height: 1.22;
       white-space: normal;
-      min-width: 96px;
-      max-width: 190px;
+      text-wrap: balance;
       word-break: normal;
       overflow-wrap: break-word;
+      min-width: 48px;
+      max-width: 108px;
+      border-right: 1px solid rgba(255, 255, 255, 0.25);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    table.excel-table thead th.th-name {
+      min-width: 115px;
+      max-width: 155px;
     }
 
     table.excel-table thead tr:last-child th {
       border-bottom: 2px solid #0f2540;
     }
 
-    table.excel-table thead th.excel-banner-th {
-      background: #162d4a;
-      color: #f8fafc;
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 6px 10px;
-      text-align: left;
-      white-space: normal;
-    }
-
     table.excel-table tbody td {
-      padding: 4px 8px;
+      padding: 4px 7px;
       border-right: 1px solid #cbd5e1;
       border-bottom: 1px solid #cbd5e1;
       vertical-align: middle;
-      line-height: 1.3;
+      line-height: 1.28;
       white-space: nowrap;
       color: #1f2937;
     }
 
-    table.excel-table tbody td.td-wrap {
+    /* Cot co nhieu chu (VD: Nhan xet, Ghi chu): thu nho chu + an bot con 2 dong de hang gon */
+    table.excel-table tbody td.td-clamped {
       white-space: normal;
-      min-width: 120px;
-      max-width: 260px;
-      word-break: normal;
-      overflow-wrap: break-word;
+      font-size: 0.73rem;
+      line-height: 1.22;
+      color: #475569;
+      min-width: 105px;
+      max-width: 155px;
+      padding: 4px 6px;
+    }
+
+    .cell-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
     }
 
     table.excel-table tbody tr:nth-child(even) {
@@ -794,7 +826,7 @@
       <div id="searchResultBody"></div>
     </section>
 
-    <!-- 3. Bang du lieu tong hop goc (hien thi nguyen noi dung goc, thu nho can doi, khong bien dang hay mat tieu de) -->
+    <!-- 3. Bang du lieu tong hop goc -->
     <section class="card" id="excelSection">
       <div class="section-header">
         <div class="section-title">📋 Bảng dữ liệu gốc (Tổng hợp Excel)</div>
@@ -804,7 +836,7 @@
       </div>
 
       <div class="table-toolbar">
-        <span id="tableMetaInfo">Hiển thị nguyên nội dung gốc từ link dữ liệu (thu nhỏ cân đối) — chạm vào dòng để xem chi tiết.</span>
+        <span id="tableMetaInfo">Tiêu đề cột được bố trí gọn đều trong ô — chạm vào dòng để xem đầy đủ nội dung cột bị rút gọn.</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <label for="pageSize">Hiển thị:</label>
           <select id="pageSize" style="width:auto;min-height:32px;padding:3px 8px;font-size:0.82rem;">
@@ -816,6 +848,9 @@
           </select>
         </div>
       </div>
+
+      <!-- Dong tieu de dau tien tach rieng ra ngoai, nam ngay duoi cho "Hien thi" va phia tren bang Excel -->
+      <div id="sheetBannerBox" class="sheet-banner-box hidden"></div>
 
       <div class="table-wrapper" id="tableWrapper">
         <div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>
@@ -877,11 +912,13 @@
         mode: '',
         rawCols: [],
         rawRows: [],
+        topProbeRows: [], // Cac dong 1, 2 doc rieng tu range=1:1, 2:2 de tach tieu de dau tien
+        bannerLines: [],
         headerRows: [],
         headers: [],
         rows: [],
-        dataStartRowIndex: 0,
-        wrapColFlags: [],
+        longColFlags: [],
+        nameColFlags: [],
         searchMatches: [],
         lastSearchQuery: '',
         currentPage: 1,
@@ -921,6 +958,7 @@
         btnCloseSearchResult: document.getElementById('btnCloseSearchResult'),
         btnExportAllCsv: document.getElementById('btnExportAllCsv'),
         tableMetaInfo: document.getElementById('tableMetaInfo'),
+        sheetBannerBox: document.getElementById('sheetBannerBox'),
         tableWrapper: document.getElementById('tableWrapper'),
         pageSize: document.getElementById('pageSize'),
         paginationBar: document.getElementById('paginationBar'),
@@ -992,6 +1030,10 @@
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       }
 
+      function normSpaces(str) {
+        return String(str || '').replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim();
+      }
+
       function removeVietnameseTones(str) {
         return String(str)
           .normalize('NFD')
@@ -1001,7 +1043,7 @@
       }
 
       function normalizeText(str) {
-        const cleaned = String(str || '').replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().toLowerCase();
+        const cleaned = normSpaces(str).toLowerCase();
         return el.optNoAccent.checked ? removeVietnameseTones(cleaned) : cleaned;
       }
 
@@ -1029,9 +1071,7 @@
 
       function hasFieldData(val) {
         if (val === undefined || val === null) return false;
-        const cleaned = String(val)
-          .replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ')
-          .trim();
+        const cleaned = normSpaces(val);
         if (!cleaned) return false;
 
         const lower = cleaned.toLowerCase();
@@ -1058,6 +1098,18 @@
         }
 
         return true;
+      }
+
+      // Neu fullText bat dau bang prefixText (bo qua khoang trang thua) thi tra ve phan con lai
+      function stripPrefixIgnoreSpaces(fullText, prefixText) {
+        const f = normSpaces(fullText);
+        const p = normSpaces(prefixText);
+        if (!p || f.length <= p.length) return null;
+        if (f.toLowerCase().startsWith(p.toLowerCase())) {
+          const rem = f.slice(p.length).replace(/^[\s\-:|/]+/, '').trim();
+          if (rem) return rem;
+        }
+        return null;
       }
 
       function parseSheetUrl(url) {
@@ -1195,7 +1247,30 @@
         }
       }
 
-      // Uu tien Export CSV & GViz CSV truoc de giu nguyen 100% chu tieu de o cac cot so (tranh GViz JSON chuyen tieu de thanh null)
+      // Doc rieng tung dong 1 va dong 2 (range=1:1, 2:2) de tach chinh xac dong tieu de lon dau tien ma khong bi GViz gop dinh vao cot M (Tre)
+      async function fetchTopProbeRows(parsed, sheetName) {
+        if (parsed.type !== 'standard') return [];
+        const fetchOneRow = async (rowNum) => {
+          try {
+            const params = buildSheetParams(
+              new URLSearchParams({ tqx: 'out:csv', range: `${rowNum}:${rowNum}` }),
+              parsed.gid,
+              sheetName
+            );
+            const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
+            const text = await fetchWithTimeout(url, 8000);
+            if (isLoginOrHtml(text)) return null;
+            const m = parseCsv(text);
+            return m && m.length ? m[0] : null;
+          } catch (_) {
+            return null;
+          }
+        };
+
+        const [r1, r2] = await Promise.all([fetchOneRow(1), fetchOneRow(2)]);
+        return [r1, r2].filter(Boolean);
+      }
+
       async function tryFetchExportCsv(parsed, sheetName) {
         const customSheet = (sheetName || '').trim();
         if (customSheet && !/^\d+$/.test(customSheet)) {
@@ -1224,7 +1299,7 @@
         const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
         const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
 
-        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'Export CSV' };
+        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, topProbeRows: [], source: 'Export CSV' };
       }
 
       async function tryFetchGvizCsv(parsed, sheetName) {
@@ -1244,7 +1319,11 @@
           url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
         }
 
-        const text = await fetchWithTimeout(url);
+        const [text, topProbeRows] = await Promise.all([
+          fetchWithTimeout(url),
+          parsed.type === 'standard' ? fetchTopProbeRows(parsed, sheetName) : Promise.resolve([])
+        ]);
+
         if (isLoginOrHtml(text)) {
           const err = new Error('PRIVATE_SHEET');
           err.code = 'PRIVATE_SHEET';
@@ -1256,7 +1335,7 @@
         const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
         const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
 
-        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'GViz CSV' };
+        return { mode: 'gviz_csv', rawCols: cols, rawRows: normalizedRows, topProbeRows, source: 'GViz CSV' };
       }
 
       async function tryFetchGvizJson(parsed, sheetName) {
@@ -1267,7 +1346,11 @@
           sheetName
         );
         const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
-        const text = await fetchWithTimeout(url);
+
+        const [text, topProbeRows] = await Promise.all([
+          fetchWithTimeout(url),
+          fetchTopProbeRows(parsed, sheetName)
+        ]);
 
         if (isLoginOrHtml(text)) {
           const err = new Error('PRIVATE_SHEET');
@@ -1296,7 +1379,7 @@
           return cols.map((_, idx) => formatGvizCell(cells[idx]));
         });
 
-        return { mode: 'gviz', rawCols: cols, rawRows: rows, source: 'GViz JSON' };
+        return { mode: 'gviz', rawCols: cols, rawRows: rows, topProbeRows, source: 'GViz JSON' };
       }
 
       function tryJsonpDefault(parsed, sheetName) {
@@ -1329,7 +1412,7 @@
               const cells = r && r.c ? r.c : [];
               return cols.map((_, idx) => formatGvizCell(cells[idx]));
             });
-            resolve({ mode: 'gviz', rawCols: cols, rawRows: rows, source: 'JSONP' });
+            resolve({ mode: 'gviz', rawCols: cols, rawRows: rows, topProbeRows: [], source: 'JSONP' });
           };
 
           const timer = setTimeout(() => {
@@ -1371,24 +1454,23 @@
         throw err;
       }
 
-      // Tach phan tieu de goc va phan du lieu ben duoi (giu nguyen 100% tung o theo dung cot, khong gop sai cot)
-      function splitOriginalHeaderAndData(rawMatrix) {
+      // Tach dong tieu de dau tien ra ngoai bang (hien thi rieng duoi "Hien thi"), giu sach cac cot tieu de ben trong bang
+      function extractBannerHeadersAndData(rawMatrix, topProbeRows) {
         if (!rawMatrix || !rawMatrix.length) {
-          return { headerRows: [], searchLabels: [], dataRows: [], dataStartRowIndex: 0 };
+          return { bannerLines: [], headerRows: [], searchLabels: [], dataRows: [] };
         }
 
         const rows = rawMatrix.map(r => Array.isArray(r) ? r.slice() : []);
-        while (rows.length && rows[rows.length - 1].every(c => String(c || '').trim() === '')) {
+        while (rows.length && rows[rows.length - 1].every(c => normSpaces(c) === '')) {
           rows.pop();
         }
         if (!rows.length) {
-          return { headerRows: [], searchLabels: [], dataRows: [], dataStartRowIndex: 0 };
+          return { bannerLines: [], headerRows: [], searchLabels: [], dataRows: [] };
         }
 
         const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
-        const padded = rows.map(r => Array.from({ length: maxCols }, (_, i) => String(r[i] || '').trim()));
+        const padded = rows.map(r => Array.from({ length: maxCols }, (_, i) => normSpaces(r[i])));
 
-        // Chi cat bo cac cot hoan toan trong o mep phai ngoai cung
         let lastCol = maxCols - 1;
         while (lastCol > 0 && padded.every(r => r[lastCol] === '')) {
           lastCol--;
@@ -1396,14 +1478,41 @@
         const numCols = lastCol + 1;
         const grid = padded.map(r => r.slice(0, numCols));
 
-        // Tim vi tri dong du lieu dau tien
-        const maxScan = Math.min(12, grid.length);
-        let firstDataRow = -1;
-        let seenHeaderCandidate = false;
+        const bannerLines = [];
+        let startIdx = 0;
 
-        for (let r = 0; r < maxScan; r++) {
-          const row = grid[r];
-          const nextRow = r + 1 < grid.length ? grid[r + 1] : null;
+        // Truong hop 1: Dong dau tien trong grid la dong tieu de lon doc lap (chi co 1-2 o co chu tren tong >= 4 cot)
+        while (startIdx < grid.length - 1 && startIdx < 3) {
+          const row = grid[startIdx];
+          const nonEmpty = row.filter(Boolean);
+          if (nonEmpty.length === 0) {
+            startIdx++;
+            continue;
+          }
+          const isTopBanner = (numCols >= 4 && nonEmpty.length <= 2 && (nonEmpty.length / numCols) <= 0.25) ||
+                              (numCols === 3 && nonEmpty.length === 1);
+          if (isTopBanner) {
+            nonEmpty.forEach(txt => {
+              if (!bannerLines.includes(txt)) bannerLines.push(txt);
+            });
+            startIdx++;
+          } else {
+            break;
+          }
+        }
+
+        const workingGrid = grid.slice(startIdx);
+        if (!workingGrid.length) {
+          return { bannerLines, headerRows: [], searchLabels: [], dataRows: [] };
+        }
+
+        // Xac dinh dong du lieu dau tien trong workingGrid
+        const maxScan = Math.min(8, workingGrid.length);
+        let firstDataRow = -1;
+
+        for (let r = 1; r < maxScan; r++) {
+          const row = workingGrid[r];
+          const nextRow = r + 1 < workingGrid.length ? workingGrid[r + 1] : null;
           const nonEmpty = [];
           for (let c = 0; c < numCols; c++) {
             if (row[c] !== '') nonEmpty.push(c);
@@ -1411,6 +1520,7 @@
           const filled = nonEmpty.length;
           if (filled === 0) continue;
 
+          // STT 1, 2
           if (nextRow) {
             for (let sttCol = 0; sttCol < Math.min(2, numCols); sttCol++) {
               if ((row[sttCol] === '1' || row[sttCol] === '01') && (nextRow[sttCol] === '2' || nextRow[sttCol] === '02')) {
@@ -1421,60 +1531,71 @@
             if (firstDataRow !== -1) break;
           }
 
-          const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25) || (numCols === 3 && filled === 1);
-          if (isBanner && !seenHeaderCandidate) {
-            continue;
-          }
-
           const numDateCount = nonEmpty.filter(c => isNumericOrDate(row[c])).length;
-
-          if (seenHeaderCandidate) {
-            const prevRow = grid[r - 1];
-            const fillsPrevGaps = prevRow.some((val, c) => val === '' && row[c] !== '');
-            const hasOwnGapsFilledNext = nextRow
-              ? row.some((val, c) => val === '' && nextRow[c] !== '')
-              : false;
-
-            if (numDateCount >= 2) {
-              firstDataRow = r;
-              break;
-            }
-            if (!fillsPrevGaps && !hasOwnGapsFilledNext && filled >= Math.max(2, Math.floor(numCols * 0.45))) {
-              firstDataRow = r;
-              break;
-            }
+          const prevRow = workingGrid[r - 1];
+          const fillsPrevGaps = prevRow.some((val, c) => val === '' && row[c] !== '');
+          if (numDateCount >= 2 || (!fillsPrevGaps && filled >= Math.max(2, Math.floor(numCols * 0.35)))) {
+            firstDataRow = r;
+            break;
           }
-
-          seenHeaderCandidate = true;
         }
 
-        if (firstDataRow === -1) {
-          for (let r = 0; r < grid.length; r++) {
-            const filled = grid[r].filter(Boolean).length;
-            if (filled === 0) continue;
-            const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25);
-            if (!isBanner) {
-              firstDataRow = r + 1;
-              break;
+        if (firstDataRow === -1) firstDataRow = 1;
+
+        const headerRows = workingGrid.slice(0, firstDataRow).filter(r => r.some(cell => cell !== ''));
+        const dataRows = workingGrid.slice(firstDataRow).filter(r => r.some(cell => cell !== ''));
+
+        // Truong hop 2: GViz da gop dong 1 (va/hoac dong 2) vao dau o tieu de cot (nhu cot M (Tre) trong anh)
+        // Dung topProbeRows (range=1:1, range=2:2) de tach chinh xac phan tieu de dau tien ra khoi o tieu de cot
+        if (headerRows.length > 0 && Array.isArray(topProbeRows) && topProbeRows.length > 0) {
+          const topHeaderRow = headerRows[0].slice();
+          let modified = false;
+
+          topProbeRows.forEach(probeRow => {
+            if (!Array.isArray(probeRow)) return;
+            const probeNonEmpty = [];
+            for (let c = 0; c < probeRow.length; c++) {
+              const v = normSpaces(probeRow[c]);
+              if (v) probeNonEmpty.push({ c, v });
             }
+            if (!probeNonEmpty.length) return;
+
+            probeNonEmpty.forEach(({ c, v }) => {
+              // Uu tien kiem tra dung cot c truoc
+              if (c < numCols) {
+                const rem = stripPrefixIgnoreSpaces(topHeaderRow[c], v);
+                if (rem !== null) {
+                  topHeaderRow[c] = rem;
+                  if (!bannerLines.includes(v)) bannerLines.push(v);
+                  modified = true;
+                  return;
+                }
+              }
+              // Neu dong probe chi co 1 o tieu de duy nhat (banner toan bang), kiem tra them cac cot khac phong truong hop lech chi so
+              if (probeNonEmpty.length === 1) {
+                for (let colIdx = 0; colIdx < numCols; colIdx++) {
+                  const rem = stripPrefixIgnoreSpaces(topHeaderRow[colIdx], v);
+                  if (rem !== null) {
+                    topHeaderRow[colIdx] = rem;
+                    if (!bannerLines.includes(v)) bannerLines.push(v);
+                    modified = true;
+                    break;
+                  }
+                }
+              }
+            });
+          });
+
+          if (modified) {
+            headerRows[0] = topHeaderRow;
           }
-          if (firstDataRow === -1) firstDataRow = 1;
         }
 
-        const headerRows = grid.slice(0, firstDataRow).filter(r => r.some(cell => cell !== ''));
-        const dataRows = grid.slice(firstDataRow).filter(r => r.some(cell => cell !== ''));
-
-        // Tao nhan cot dung cho tim kiem: chi lay dung noi dung trong chinh cot c (khong vay muon tu cot khac)
-        const nonBannerHeaders = headerRows.filter((row, idx) => {
-          const filled = row.filter(Boolean).length;
-          const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25) || (numCols === 3 && filled === 1);
-          return !(isBanner && idx === 0 && headerRows.length > 1);
-        });
-
+        // Tao nhan cot sach dung cho bo loc & the ket qua tim kiem
         const searchLabels = Array.from({ length: numCols }, (_, c) => {
           const parts = [];
-          for (let r = 0; r < nonBannerHeaders.length; r++) {
-            const val = nonBannerHeaders[r][c];
+          for (let r = 0; r < headerRows.length; r++) {
+            const val = headerRows[r][c];
             if (val && parts[parts.length - 1] !== val) {
               parts.push(val);
             }
@@ -1482,57 +1603,20 @@
           return parts.length ? parts.join(' - ') : `Cột ${colToExcelLetter(c)}`;
         });
 
-        return {
-          headerRows,
-          searchLabels,
-          dataRows,
-          dataStartRowIndex: headerRows.length
-        };
+        return { bannerLines, headerRows, searchLabels, dataRows };
       }
 
-      // Dung <thead> 1:1 theo dung tung cot c (khong tu y gop colspan ngang de tranh tieu de cot nay lan sang cot khac)
-      function buildOriginalTheadHtml(headerRows, numCols) {
-        const H = headerRows.length;
-        if (H === 0 || numCols === 0) return '';
-
-        const grid = headerRows.map(r => Array.from({ length: numCols }, (_, c) => String(r[c] || '').trim()));
-        let html = '<thead>';
-
-        for (let r = 0; r < H; r++) {
-          html += '<tr>';
-          if (r === 0) {
-            html += `<th class="col-stt" rowspan="${H}">#</th>`;
+      // Nhan dien cot co noi dung nhieu chu (VD: Nhan xet, Ghi chu) de thu nho va an bot con 2 dong
+      function detectLongDataColumns(headers, rows) {
+        return headers.map((h, colIdx) => {
+          const hNorm = normalizeText(h);
+          if (/(nhan xet|ghi chu|noi dung|ly do|mo ta|chi tiet|bao cao|danh gia|xep loai chung)/.test(hNorm)) {
+            return true;
           }
 
-          const nonEmptyCols = [];
-          for (let c = 0; c < numCols; c++) {
-            if (grid[r][c] !== '') nonEmptyCols.push(c);
-          }
-
-          // Chi gop ngang toan bang neu dong tren cung chi co duy nhat 1 o tieu de bao cao (banner)
-          if (nonEmptyCols.length === 1 && r === 0 && H > 1) {
-            html += `<th colspan="${numCols}" class="excel-banner-th">${escapeHtml(grid[r][nonEmptyCols[0]])}</th></tr>`;
-            continue;
-          }
-
-          // Tat ca cac dong tieu de cot: moi o nam dung vi tri cot c (1 o = 1 cot)
-          for (let c = 0; c < numCols; c++) {
-            const val = grid[r][c];
-            const needsWrap = val.length > 22 || val.includes('\n');
-            html += `<th class="${needsWrap ? 'th-wrap' : ''}">${escapeHtml(val)}</th>`;
-          }
-
-          html += '</tr>';
-        }
-
-        html += '</thead>';
-        return html;
-      }
-
-      // Nhan dien cot co noi dung dai de cho phep xuong dong tu nhien ma khong cat mat noi dung
-      function detectWrapColumns(numCols, rows) {
-        return Array.from({ length: numCols }, (_, colIdx) => {
           let nonEmptyCount = 0;
+          let totalLen = 0;
+          let maxLen = 0;
           let longCellCount = 0;
           let hasNewline = false;
 
@@ -1540,13 +1624,57 @@
             const val = String(rows[i][colIdx] || '').trim();
             if (!val) continue;
             nonEmptyCount++;
-            if (val.length >= 28) longCellCount++;
+            const len = val.length;
+            totalLen += len;
+            if (len > maxLen) maxLen = len;
+            if (len >= 26) longCellCount++;
             if (val.includes('\n')) hasNewline = true;
           }
 
           if (nonEmptyCount === 0) return false;
-          return hasNewline || (longCellCount / nonEmptyCount) >= 0.2;
+          const avgLen = totalLen / nonEmptyCount;
+          const longRatio = longCellCount / nonEmptyCount;
+          return avgLen >= 22 || maxLen >= 40 || longRatio >= 0.2 || hasNewline;
         });
+      }
+
+      function detectNameColumns(headers) {
+        return headers.map(h => /(ho ten|ho va ten|ten hs|hoc sinh)/.test(normalizeText(h)));
+      }
+
+      function buildTheadHtml(headerRows, numCols, nameColFlags) {
+        const H = headerRows.length;
+        if (H === 0 || numCols === 0) return '';
+
+        let html = '<thead>';
+        for (let r = 0; r < H; r++) {
+          html += '<tr>';
+          if (r === 0) {
+            html += `<th class="col-stt" rowspan="${H}">#</th>`;
+          }
+          for (let c = 0; c < numCols; c++) {
+            const val = headerRows[r][c] || '';
+            const cls = nameColFlags[c] ? ' class="th-name"' : '';
+            html += `<th${cls}>${escapeHtml(val)}</th>`;
+          }
+          html += '</tr>';
+        }
+        html += '</thead>';
+        return html;
+      }
+
+      function renderBannerBox() {
+        if (!state.bannerLines.length) {
+          el.sheetBannerBox.classList.add('hidden');
+          el.sheetBannerBox.innerHTML = '';
+          return;
+        }
+        const mainLine = escapeHtml(state.bannerLines[0]);
+        const subLines = state.bannerLines.slice(1)
+          .map(line => `<div class="sheet-banner-sub">${escapeHtml(line)}</div>`)
+          .join('');
+        el.sheetBannerBox.innerHTML = `<div class="sheet-banner-main">${mainLine}</div>${subLines}`;
+        el.sheetBannerBox.classList.remove('hidden');
       }
 
       function rebuildTableModel() {
@@ -1554,11 +1682,13 @@
         const rawRows = state.rawRows || [];
 
         if (!cols.length && !rawRows.length) {
+          state.bannerLines = [];
           state.headerRows = [];
           state.headers = [];
           state.rows = [];
-          state.dataStartRowIndex = 0;
-          state.wrapColFlags = [];
+          state.longColFlags = [];
+          state.nameColFlags = [];
+          renderBannerBox();
           populateColumnFilter();
           renderExcelTable();
           return;
@@ -1568,14 +1698,16 @@
         const hasAnyLabel = colLabels.some(Boolean);
         const fullMatrix = hasAnyLabel ? [colLabels, ...rawRows] : rawRows.slice();
 
-        const parsed = splitOriginalHeaderAndData(fullMatrix);
+        const parsed = extractBannerHeadersAndData(fullMatrix, state.topProbeRows);
 
+        state.bannerLines = parsed.bannerLines;
         state.headerRows = parsed.headerRows;
         state.headers = parsed.searchLabels;
         state.rows = parsed.dataRows;
-        state.dataStartRowIndex = parsed.dataStartRowIndex;
-        state.wrapColFlags = detectWrapColumns(state.headers.length, state.rows);
+        state.longColFlags = detectLongDataColumns(state.headers, state.rows);
+        state.nameColFlags = detectNameColumns(state.headers);
 
+        renderBannerBox();
         populateColumnFilter();
         renderExcelTable();
 
@@ -1754,12 +1886,11 @@
           }).join('');
 
           const countTag = hideEmpty ? ` • ${visibleCount}/${totalCols} mục có dữ liệu` : '';
-          const sheetRowNum = state.dataStartRowIndex + item.rowIndex + 1;
 
           return `
             <div class="result-item-card">
               <div class="result-item-head">
-                <span>Kết quả #${idx + 1} (Hàng ${sheetRowNum} trong bảng gốc${countTag})</span>
+                <span>Kết quả #${idx + 1} (Dòng ${item.rowIndex + 1}${countTag})</span>
                 <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Xem đầy đủ</button>
               </div>
               <div class="result-kv-list">
@@ -1788,11 +1919,14 @@
         if (!numCols || total === 0) {
           el.tableWrapper.innerHTML = '<div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>';
           el.paginationBar.style.display = 'none';
-          el.tableMetaInfo.textContent = 'Hiển thị nguyên nội dung gốc từ link dữ liệu (thu nhỏ cân đối) — chạm vào dòng để xem chi tiết.';
+          el.tableMetaInfo.textContent = 'Tiêu đề cột được bố trí gọn đều trong ô — chạm vào dòng để xem đầy đủ nội dung cột bị rút gọn.';
           return;
         }
 
-        el.tableMetaInfo.textContent = `Hiển thị nguyên nội dung gốc (${total.toLocaleString('vi-VN')} hàng × ${numCols} cột, thu nhỏ cân đối) — chạm vào dòng để xem chi tiết.`;
+        const clampedCount = state.longColFlags.filter(Boolean).length;
+        el.tableMetaInfo.textContent = clampedCount > 0
+          ? `${total.toLocaleString('vi-VN')} hàng × ${numCols} cột • Đã rút gọn ${clampedCount} cột nhiều chữ (chạm vào dòng để xem đủ).`
+          : `${total.toLocaleString('vi-VN')} hàng × ${numCols} cột • Chạm vào dòng để xem chi tiết.`;
 
         const pageSize = Number(el.pageSize.value);
         state.pageSize = pageSize;
@@ -1804,18 +1938,20 @@
         const pageRows = state.rows.slice(start, end);
 
         let html = '<table class="excel-table">';
-        html += buildOriginalTheadHtml(state.headerRows, numCols);
+        html += buildTheadHtml(state.headerRows, numCols, state.nameColFlags);
         html += '<tbody>';
 
         pageRows.forEach((row, rIdx) => {
           const originIdx = start + rIdx;
-          const sheetRowNum = state.dataStartRowIndex + originIdx + 1;
-          html += `<tr data-row-idx="${originIdx}"><td class="col-stt">${sheetRowNum}</td>`;
+          html += `<tr data-row-idx="${originIdx}"><td class="col-stt">${originIdx + 1}</td>`;
           for (let c = 0; c < numCols; c++) {
             const val = row[c] !== undefined ? row[c] : '';
             const safeVal = linkifyEscaped(escapeHtml(val));
-            const needsWrap = state.wrapColFlags[c] || val.length > 28 || val.includes('\n');
-            html += `<td class="${needsWrap ? 'td-wrap' : ''}">${safeVal}</td>`;
+            if (state.longColFlags[c] && !state.nameColFlags[c]) {
+              html += `<td class="td-clamped" title="${escapeHtml(val)}"><div class="cell-clamp">${safeVal}</div></td>`;
+            } else {
+              html += `<td>${safeVal}</td>`;
+            }
           }
           html += '</tr>';
         });
@@ -1838,10 +1974,9 @@
       function openRowDetail(originIndex, hideEmpty = false) {
         const row = state.rows[originIndex];
         if (!row) return;
-        const sheetRowNum = state.dataStartRowIndex + originIndex + 1;
         el.modalTitle.textContent = hideEmpty
-          ? `Chi tiết có dữ liệu — Hàng #${sheetRowNum}`
-          : `Chi tiết đầy đủ — Hàng #${sheetRowNum}`;
+          ? `Chi tiết có dữ liệu — Dòng #${originIndex + 1}`
+          : `Chi tiết đầy đủ — Dòng #${originIndex + 1}`;
 
         const itemsHtml = state.headers.map((h, i) => {
           const val = row[i] !== undefined ? row[i] : '';
@@ -1931,15 +2066,18 @@
         el.searchInput.value = '';
         state.rawCols = [];
         state.rawRows = [];
+        state.topProbeRows = [];
+        state.bannerLines = [];
         state.headerRows = [];
         state.headers = [];
         state.rows = [];
-        state.dataStartRowIndex = 0;
-        state.wrapColFlags = [];
+        state.longColFlags = [];
+        state.nameColFlags = [];
         state.currentPage = 1;
         state.lastLoadedAt = 0;
 
         closeSearchResultSection();
+        renderBannerBox();
         populateColumnFilter();
         renderExcelTable();
         updateSaveBadge();
@@ -2006,6 +2144,7 @@
           state.mode = result.mode;
           state.rawCols = result.rawCols;
           state.rawRows = result.rawRows;
+          state.topProbeRows = result.topProbeRows || [];
           state.lastLoadedAt = Date.now();
 
           rebuildTableModel();
