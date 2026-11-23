@@ -287,13 +287,6 @@
       border: 1px solid #fecaca;
     }
 
-    .status-msg.success {
-      display: block;
-      background: #f0fdf4;
-      color: #166534;
-      border: 1px solid #bbf7d0;
-    }
-
     /* Khu vuc tim kiem */
     .search-grid {
       display: grid;
@@ -810,7 +803,6 @@
             Không phân biệt dấu tiếng Việt
           </label>
         </div>
-        <span id="searchHint">Chỉ hiện mục có dữ liệu & khớp chính xác từ khóa</span>
       </div>
     </section>
 
@@ -836,7 +828,6 @@
       </div>
 
       <div class="table-toolbar">
-        <span id="tableMetaInfo">Tiêu đề cột được bố trí gọn đều trong ô — chạm vào dòng để xem đầy đủ nội dung cột bị rút gọn.</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <label for="pageSize">Hiển thị:</label>
           <select id="pageSize" style="width:auto;min-height:32px;padding:3px 8px;font-size:0.82rem;">
@@ -957,7 +948,6 @@
         btnExportSearchCsv: document.getElementById('btnExportSearchCsv'),
         btnCloseSearchResult: document.getElementById('btnCloseSearchResult'),
         btnExportAllCsv: document.getElementById('btnExportAllCsv'),
-        tableMetaInfo: document.getElementById('tableMetaInfo'),
         sheetBannerBox: document.getElementById('sheetBannerBox'),
         tableWrapper: document.getElementById('tableWrapper'),
         pageSize: document.getElementById('pageSize'),
@@ -1919,14 +1909,8 @@
         if (!numCols || total === 0) {
           el.tableWrapper.innerHTML = '<div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>';
           el.paginationBar.style.display = 'none';
-          el.tableMetaInfo.textContent = 'Tiêu đề cột được bố trí gọn đều trong ô — chạm vào dòng để xem đầy đủ nội dung cột bị rút gọn.';
           return;
         }
-
-        const clampedCount = state.longColFlags.filter(Boolean).length;
-        el.tableMetaInfo.textContent = clampedCount > 0
-          ? `${total.toLocaleString('vi-VN')} hàng × ${numCols} cột • Đã rút gọn ${clampedCount} cột nhiều chữ (chạm vào dòng để xem đủ).`
-          : `${total.toLocaleString('vi-VN')} hàng × ${numCols} cột • Chạm vào dòng để xem chi tiết.`;
 
         const pageSize = Number(el.pageSize.value);
         state.pageSize = pageSize;
@@ -2152,11 +2136,9 @@
           el.sheetBadge.textContent = `${state.rows.length.toLocaleString('vi-VN')} dòng • ${state.headers.length} cột`;
           updateLastSyncBadge(state.lastLoadedAt);
 
+          setStatus('', '');
           if (isBackgroundRefresh) {
-            setStatus('success', `🔄 Đã tự động cập nhật dữ liệu mới nhất lúc <strong>${formatTimeNow(state.lastLoadedAt)}</strong> (${state.rows.length.toLocaleString('vi-VN')} dòng).`);
             showToast('🔄 Đã cập nhật dữ liệu mới nhất!');
-          } else {
-            setStatus('success', `✅ Tải thành công <strong>${state.rows.length.toLocaleString('vi-VN')}</strong> dòng và <strong>${state.headers.length}</strong> cột (cập nhật lúc ${formatTimeNow(state.lastLoadedAt)}).`);
           }
 
           const saved = getSavedLink();
