@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Tra cứu dữ liệu Google Sheets</title>
   <style>
     :root {
@@ -66,11 +69,11 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .badge {
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       background: #e0ecff;
       color: var(--primary);
       padding: 4px 10px;
@@ -86,6 +89,11 @@
     .badge.unsaved {
       background: #e2e8f0;
       color: #475569;
+    }
+
+    .badge.sync {
+      background: #fef3c7;
+      color: #92400e;
     }
 
     .card {
@@ -232,6 +240,29 @@
       font-size: 0.8rem;
     }
 
+    .link-options-bar {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border-light);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 0.81rem;
+      color: var(--muted);
+    }
+
+    .link-options-bar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+    }
+
     .status-msg {
       padding: 10px 14px;
       border-radius: 8px;
@@ -319,12 +350,14 @@
 
     .result-item-head {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      gap: 6px;
       margin-bottom: 6px;
       padding-bottom: 5px;
       border-bottom: 1px dashed var(--border-light);
-      font-size: 0.8rem;
+      font-size: 0.79rem;
       font-weight: 700;
       color: var(--primary);
     }
@@ -339,7 +372,7 @@
       display: grid;
       grid-template-columns: minmax(90px, 38%) 1fr;
       gap: 8px;
-      padding: 2px 0;
+      padding: 3px 0;
       border-bottom: 1px solid #f1f5f9;
     }
 
@@ -421,6 +454,14 @@
 
     table.excel-table tbody td.col-compact {
       white-space: nowrap;
+    }
+
+    table.excel-table tbody td.col-rowspan {
+      background: #ffffff;
+      font-weight: 600;
+      color: #0f172a;
+      vertical-align: middle;
+      text-align: center;
     }
 
     /* Cot nhieu noi dung: thu nho chu + an bot de hang gon, hien thi duoc nhieu ten */
@@ -641,6 +682,8 @@
       <div class="header-actions">
         <span class="badge unsaved" id="saveBadge">Chưa lưu trên máy</span>
         <span class="badge" id="sheetBadge">Chưa tải dữ liệu</span>
+        <span class="badge sync hidden" id="lastSyncBadge"></span>
+        <button type="button" class="btn-primary btn-sm" id="btnRefreshNow" title="Tải lại dữ liệu mới nhất từ Google Sheets" disabled>🔄 Cập nhật mới</button>
         <button type="button" class="btn-secondary btn-sm" id="btnToggleLinkPanel">🔗 Ẩn khung nhập link</button>
       </div>
     </header>
@@ -676,6 +719,14 @@
         <button type="button" class="btn-secondary" id="btnPaste">📋 Dán link</button>
         <button type="button" class="btn-danger" id="btnDeleteLink">🗑️ Xóa link</button>
       </div>
+
+      <div class="link-options-bar">
+        <label>
+          <input type="checkbox" id="optAutoRefresh" checked>
+          Tự động cập nhật thông tin mới nhất khi mở lại trang hoặc quay lại tab
+        </label>
+        <span>Bỏ qua bộ nhớ đệm cũ để luôn lấy dữ liệu mới</span>
+      </div>
     </section>
 
     <!-- 2. Khu vuc tim kiem chuan xac -->
@@ -706,6 +757,14 @@
 
       <div class="search-options">
         <div class="checkbox-group">
+          <label title="Tự động ẩn tất cả các cột/ô trống hoặc không có dữ liệu trong kết quả tìm kiếm">
+            <input type="checkbox" id="optHideEmptyFields" checked>
+            Ẩn mục không có dữ liệu
+          </label>
+          <label title="Ẩn thêm các ô ghi số 0 hoặc chữ 'Không'">
+            <input type="checkbox" id="optHideZeroAndNone">
+            Ẩn cả mục bằng 0 / "Không"
+          </label>
           <label title="Bật để chỉ nhận kết quả khớp toàn bộ nội dung của ô (ví dụ: đánh đủ 'Nguyễn Văn An' sẽ không khớp 'Lê Nguyễn Văn An')">
             <input type="checkbox" id="optExactCell">
             Khớp tuyệt đối toàn bộ ô
@@ -715,7 +774,7 @@
             Không phân biệt dấu tiếng Việt
           </label>
         </div>
-        <span id="searchHint">Chỉ hiển thị kết quả đúng chính xác từ khóa đã nhập</span>
+        <span id="searchHint">Chỉ hiện mục có dữ liệu & khớp chính xác từ khóa</span>
       </div>
     </section>
 
@@ -731,21 +790,28 @@
       <div id="searchResultBody"></div>
     </section>
 
-    <!-- 3 & 4. Bang du lieu tong hop goc (tach biet hoan toan voi khu vuc tim kiem) -->
+    <!-- 3 & 4. Bang du lieu tong hop goc (an tieu de gop cot o tren dau, chi hien cot don & thong tin gop hang) -->
     <section class="card" id="excelSection">
       <div class="section-header">
         <div class="section-title">📋 Bảng dữ liệu gốc (Tổng hợp Excel)</div>
         <div class="btn-group">
-          <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--muted);cursor:pointer;">
-            <input type="checkbox" id="optFirstRowHeader">
-            Ép dòng đầu làm tiêu đề
-          </label>
+          <div style="display:inline-flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--muted);">
+            <label for="headerModeSelect">Tiêu đề:</label>
+            <select id="headerModeSelect" style="width:auto;min-height:32px;padding:3px 8px;font-size:0.8rem;" title="Tự động ẩn tiêu đề gộp cột phía trên và giữ tiêu đề cột đơn + ô gộp hàng">
+              <option value="auto" selected>Tự động (Ẩn gộp cột)</option>
+              <option value="1">Dòng 1 làm tiêu đề</option>
+              <option value="2">Dòng 2 làm tiêu đề</option>
+              <option value="3">Dòng 3 làm tiêu đề</option>
+              <option value="4">Dòng 4 làm tiêu đề</option>
+              <option value="5">Dòng 5 làm tiêu đề</option>
+            </select>
+          </div>
           <button type="button" class="btn-secondary btn-sm" id="btnExportAllCsv" disabled>⬇ Xuất CSV</button>
         </div>
       </div>
 
       <div class="table-toolbar">
-        <span id="tableMetaInfo">Chạm vào 1 dòng để xem đầy đủ nội dung các cột bị thu gọn.</span>
+        <span id="tableMetaInfo">Tự động ẩn tiêu đề gộp cột ở trên đầu — chỉ hiển thị cột đơn và thông tin gộp hàng.</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <label for="pageSize">Hiển thị:</label>
           <select id="pageSize" style="width:auto;min-height:32px;padding:3px 8px;font-size:0.82rem;">
@@ -781,7 +847,7 @@
         <h2 id="savePromptTitle">💾 Lưu link trên máy này?</h2>
       </div>
       <div class="modal-body">
-        <p style="margin-bottom:8px;">Tải dữ liệu thành công! Bạn có muốn lưu link này trên thiết bị này để lần sau tự động mở không?</p>
+        <p style="margin-bottom:8px;">Tải dữ liệu thành công! Bạn có muốn lưu link này trên thiết bị này để <strong>tự động cập nhật dữ liệu mới nhất</strong> mỗi lần mở sau không?</p>
         <p style="font-size:0.82rem;color:var(--muted);">Link chỉ lưu cục bộ trên điện thoại/máy hiện tại. Sau khi chọn, khung nhập link sẽ tự động ẩn gọn.</p>
       </div>
       <div class="modal-footer">
@@ -810,7 +876,9 @@
     (function () {
       'use strict';
 
-      const STORAGE_SAVED_KEY = 'gsheet_local_device_link_v3';
+      const STORAGE_SAVED_KEY = 'gsheet_local_device_link_v4';
+      const LEGACY_KEYS = ['gsheet_local_device_link_v3', 'gsheet_local_device_link_v2'];
+      const AUTO_REFRESH_MIN_INTERVAL_MS = 12000;
 
       const state = {
         mode: '',
@@ -819,29 +887,38 @@
         headers: [],
         rows: [],
         longColFlags: [],
-        searchMatches: [], // [{ rowIndex, row }]
+        rowspanColFlags: [],
+        hiddenTopRowsCount: 0,
+        searchMatches: [],
         lastSearchQuery: '',
         currentPage: 1,
         pageSize: 100,
-        pendingSavePayload: null
+        pendingSavePayload: null,
+        isLoading: false,
+        lastLoadedAt: 0
       };
 
       const el = {
         linkPanel: document.getElementById('linkPanel'),
         btnToggleLinkPanel: document.getElementById('btnToggleLinkPanel'),
         btnHideLinkPanel: document.getElementById('btnHideLinkPanel'),
+        btnRefreshNow: document.getElementById('btnRefreshNow'),
         sheetUrl: document.getElementById('sheetUrl'),
         sheetName: document.getElementById('sheetName'),
         btnLoad: document.getElementById('btnLoad'),
         btnPaste: document.getElementById('btnPaste'),
         btnDeleteLink: document.getElementById('btnDeleteLink'),
+        optAutoRefresh: document.getElementById('optAutoRefresh'),
         saveBadge: document.getElementById('saveBadge'),
         sheetBadge: document.getElementById('sheetBadge'),
+        lastSyncBadge: document.getElementById('lastSyncBadge'),
         statusMsg: document.getElementById('statusMsg'),
         searchInput: document.getElementById('searchInput'),
         columnFilter: document.getElementById('columnFilter'),
         btnSearch: document.getElementById('btnSearch'),
         btnClearSearch: document.getElementById('btnClearSearch'),
+        optHideEmptyFields: document.getElementById('optHideEmptyFields'),
+        optHideZeroAndNone: document.getElementById('optHideZeroAndNone'),
         optExactCell: document.getElementById('optExactCell'),
         optNoAccent: document.getElementById('optNoAccent'),
         searchResultSection: document.getElementById('searchResultSection'),
@@ -849,7 +926,7 @@
         searchResultBody: document.getElementById('searchResultBody'),
         btnExportSearchCsv: document.getElementById('btnExportSearchCsv'),
         btnCloseSearchResult: document.getElementById('btnCloseSearchResult'),
-        optFirstRowHeader: document.getElementById('optFirstRowHeader'),
+        headerModeSelect: document.getElementById('headerModeSelect'),
         btnExportAllCsv: document.getElementById('btnExportAllCsv'),
         tableMetaInfo: document.getElementById('tableMetaInfo'),
         tableWrapper: document.getElementById('tableWrapper'),
@@ -880,6 +957,24 @@
       function setStatus(type, htmlText) {
         el.statusMsg.className = 'status-msg' + (type ? ' ' + type : '');
         el.statusMsg.innerHTML = htmlText || '';
+      }
+
+      function formatTimeNow(ts) {
+        const d = new Date(ts);
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = String(d.getMinutes()).padStart(2, '0');
+        const ss = String(d.getSeconds()).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+      }
+
+      function updateLastSyncBadge(ts) {
+        if (!ts) {
+          el.lastSyncBadge.classList.add('hidden');
+          el.lastSyncBadge.textContent = '';
+          return;
+        }
+        el.lastSyncBadge.textContent = `🕒 Mới nhất: ${formatTimeNow(ts)}`;
+        el.lastSyncBadge.classList.remove('hidden');
       }
 
       function setLinkPanelVisible(visible) {
@@ -914,8 +1009,63 @@
       }
 
       function normalizeText(str) {
-        const cleaned = String(str || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const cleaned = String(str || '').replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ').trim().toLowerCase();
         return el.optNoAccent.checked ? removeVietnameseTones(cleaned) : cleaned;
+      }
+
+      function colToExcelLetter(idx) {
+        let s = '';
+        let n = idx + 1;
+        while (n > 0) {
+          const rem = (n - 1) % 26;
+          s = String.fromCharCode(65 + rem) + s;
+          n = Math.floor((n - 1) / 26);
+        }
+        return s;
+      }
+
+      function isNumericOrDate(val) {
+        const v = String(val || '').trim();
+        if (!v) return false;
+        const cleanedNum = v.replace(/[,.\-+%\s]/g, '');
+        if (/^\d+$/.test(cleanedNum)) return true;
+        if (/^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/.test(v) || /^\d{4}[/-]\d{1,2}[/-]\d{1,2}$/.test(v)) {
+          return true;
+        }
+        return false;
+      }
+
+      function hasFieldData(val) {
+        if (val === undefined || val === null) return false;
+        const cleaned = String(val)
+          .replace(/[\s\u00A0\u200B-\u200D\uFEFF]+/g, ' ')
+          .trim();
+        if (!cleaned) return false;
+
+        const lower = cleaned.toLowerCase();
+        const emptyTokens = new Set([
+          '-', '--', '---', '—', '–',
+          'null', 'undefined', 'nan', 'n/a', '#n/a',
+          '#value!', '#ref!', '#div/0!', '#name?', '#null!', '#num!',
+          '(trống)', 'trống'
+        ]);
+        if (emptyTokens.has(lower)) return false;
+
+        if (el.optHideZeroAndNone.checked) {
+          if (
+            lower === '0' ||
+            lower === '0.0' ||
+            lower === '0,0' ||
+            lower === 'không' ||
+            lower === 'khong' ||
+            lower === 'không có' ||
+            lower === 'khong co'
+          ) {
+            return false;
+          }
+        }
+
+        return true;
       }
 
       function parseSheetUrl(url) {
@@ -1019,6 +1169,10 @@
         return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html') || trimmed.includes('accounts.google.com/servicelogin');
       }
 
+      function makeCacheBusterToken() {
+        return `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+
       function buildSheetParams(baseParams, gid, sheetName) {
         const customSheet = (sheetName || '').trim();
         if (customSheet) {
@@ -1027,6 +1181,7 @@
         } else if (gid) {
           baseParams.set('gid', gid);
         }
+        baseParams.set('_nocache', makeCacheBusterToken());
         return baseParams;
       }
 
@@ -1038,6 +1193,7 @@
             method: 'GET',
             mode: 'cors',
             credentials: 'omit',
+            cache: 'no-store',
             signal: controller.signal
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1047,8 +1203,14 @@
         }
       }
 
+      // Dat headers=0 de Google Visualization API tra ve nguyen ven tung dong tu Row 1 (khong tu gop tieu de gop cot)
       async function tryFetchGvizJson(parsed, sheetName) {
-        const params = buildSheetParams(new URLSearchParams({ tqx: 'out:json' }), parsed.gid, sheetName);
+        const reqId = String(Date.now());
+        const params = buildSheetParams(
+          new URLSearchParams({ tqx: `out:json;reqId:${reqId}`, headers: '0' }),
+          parsed.gid,
+          sheetName
+        );
         const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
         const text = await fetchWithTimeout(url);
 
@@ -1085,14 +1247,17 @@
       async function tryFetchGvizCsv(parsed, sheetName) {
         let url = '';
         if (parsed.type === 'pub') {
-          const p = new URLSearchParams({ output: 'csv' });
+          const p = new URLSearchParams({
+            output: 'csv',
+            _nocache: makeCacheBusterToken()
+          });
           if (parsed.gid) {
             p.set('gid', parsed.gid);
             p.set('single', 'true');
           }
           url = `https://docs.google.com/spreadsheets/d/e/${encodeURIComponent(parsed.id)}/pub?${p.toString()}`;
         } else {
-          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:csv' }), parsed.gid, sheetName);
+          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:csv', headers: '0' }), parsed.gid, sheetName);
           url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
         }
 
@@ -1112,7 +1277,10 @@
       }
 
       async function tryFetchExportCsv(parsed) {
-        const params = new URLSearchParams({ format: 'csv' });
+        const params = new URLSearchParams({
+          format: 'csv',
+          _nocache: makeCacheBusterToken()
+        });
         if (parsed.gid) params.set('gid', parsed.gid);
         const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/export?${params.toString()}`;
 
@@ -1178,7 +1346,12 @@
             reject(new Error('Không thể tải script từ Google Sheets.'));
           };
 
-          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:json' }), parsed.gid, sheetName);
+          const reqId = String(Date.now());
+          const params = buildSheetParams(
+            new URLSearchParams({ tqx: `out:json;reqId:${reqId}`, headers: '0' }),
+            parsed.gid,
+            sheetName
+          );
           script.src = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
           document.head.appendChild(script);
         });
@@ -1196,6 +1369,171 @@
         const err = new Error(errors.join(' | '));
         err.code = 'ALL_FAILED';
         throw err;
+      }
+
+      // Xu ly tieu de thong minh:
+      // - An cac dong tieu de lon & tieu de gop cot o phia tren
+      // - Chi giu tieu de cua cac cot don va cac o tieu de gop hang (rowspan)
+      function extractCleanHeadersAndData(rawMatrix, manualHeaderRowNumber) {
+        if (!rawMatrix || !rawMatrix.length) {
+          return { headers: [], dataRows: [], hiddenTopRows: 0 };
+        }
+
+        const rows = rawMatrix.map(r => Array.isArray(r) ? r.slice() : []);
+        while (rows.length && rows[rows.length - 1].every(c => String(c || '').trim() === '')) {
+          rows.pop();
+        }
+        if (!rows.length) {
+          return { headers: [], dataRows: [], hiddenTopRows: 0 };
+        }
+
+        const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+        const padded = rows.map(r => Array.from({ length: maxCols }, (_, i) => String(r[i] || '').trim()));
+
+        // Cat bo cac cot thua hoan toan rong o ben phai
+        let lastCol = maxCols - 1;
+        while (lastCol > 0 && padded.every(r => r[lastCol] === '')) {
+          lastCol--;
+        }
+        const numCols = lastCol + 1;
+        const grid = padded.map(r => r.slice(0, numCols));
+
+        // Che do chon thu cong dong lam tieu de (1-based)
+        if (manualHeaderRowNumber > 0) {
+          const leafIdx = Math.min(manualHeaderRowNumber - 1, grid.length - 1);
+          const headerRows = [];
+          for (let r = 0; r <= leafIdx; r++) {
+            const filled = grid[r].filter(Boolean).length;
+            if (filled === 0) continue;
+            const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25) || (numCols === 3 && filled === 1);
+            if (isBanner && r < leafIdx && headerRows.length === 0) continue;
+            headerRows.push(grid[r]);
+          }
+          const leaf = grid[leafIdx];
+          const headers = [];
+          for (let c = 0; c < numCols; c++) {
+            if (leaf[c] !== '') {
+              headers.push(leaf[c]);
+            } else {
+              let mergedUp = '';
+              for (let m = headerRows.length - 2; m >= 0; m--) {
+                if (headerRows[m][c] !== '') {
+                  mergedUp = headerRows[m][c];
+                  break;
+                }
+              }
+              headers.push(mergedUp || `Cột ${colToExcelLetter(c)}`);
+            }
+          }
+          const dataRows = grid.slice(leafIdx + 1).filter(r => r.some(cell => cell !== ''));
+          return { headers, dataRows, hiddenTopRows: leafIdx };
+        }
+
+        // Che do tu dong nhan dien tieu de gop cot & gop hang
+        const maxScan = Math.min(12, grid.length);
+        let firstDataRow = -1;
+        let seenHeaderCandidate = false;
+
+        for (let r = 0; r < maxScan; r++) {
+          const row = grid[r];
+          const nextRow = r + 1 < grid.length ? grid[r + 1] : null;
+          const nonEmpty = [];
+          for (let c = 0; c < numCols; c++) {
+            if (row[c] !== '') nonEmpty.push(c);
+          }
+          const filled = nonEmpty.length;
+          if (filled === 0) continue;
+
+          // Nhan dien dong du lieu dau tien qua STT = 1 theo sau la STT = 2
+          if (nextRow) {
+            for (let sttCol = 0; sttCol < Math.min(2, numCols); sttCol++) {
+              if ((row[sttCol] === '1' || row[sttCol] === '01') && (nextRow[sttCol] === '2' || nextRow[sttCol] === '02')) {
+                firstDataRow = r;
+                break;
+              }
+            }
+            if (firstDataRow !== -1) break;
+          }
+
+          const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25) || (numCols === 3 && filled === 1);
+          if (isBanner && !seenHeaderCandidate) {
+            continue;
+          }
+
+          const numDateCount = nonEmpty.filter(c => isNumericOrDate(row[c])).length;
+
+          if (seenHeaderCandidate) {
+            const prevRow = grid[r - 1];
+            const fillsPrevGaps = prevRow.some((val, c) => val === '' && row[c] !== '');
+            const hasOwnGapsFilledNext = nextRow
+              ? row.some((val, c) => val === '' && nextRow[c] !== '')
+              : false;
+
+            if (numDateCount >= 2) {
+              firstDataRow = r;
+              break;
+            }
+            if (!fillsPrevGaps && !hasOwnGapsFilledNext && filled >= Math.max(2, Math.floor(numCols * 0.45))) {
+              firstDataRow = r;
+              break;
+            }
+          }
+
+          seenHeaderCandidate = true;
+        }
+
+        if (firstDataRow === -1) {
+          for (let r = 0; r < grid.length; r++) {
+            const filled = grid[r].filter(Boolean).length;
+            if (filled === 0) continue;
+            const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25);
+            if (!isBanner) {
+              firstDataRow = r + 1;
+              break;
+            }
+          }
+          if (firstDataRow === -1) firstDataRow = 1;
+        }
+
+        // Thu thap cac dong thuoc khu vuc tieu de bang (bo qua cac dong tieu de lon o tren cung)
+        const headerRows = [];
+        for (let r = 0; r < firstDataRow; r++) {
+          const row = grid[r];
+          const filled = row.filter(Boolean).length;
+          if (filled === 0) continue;
+          const isBanner = (numCols >= 4 && filled <= 2 && (filled / numCols) <= 0.25) || (numCols === 3 && filled === 1);
+          if (isBanner && headerRows.length === 0) continue;
+          headerRows.push(row);
+        }
+
+        if (!headerRows.length) {
+          const headers = Array.from({ length: numCols }, (_, c) => `Cột ${colToExcelLetter(c)}`);
+          const dataRows = grid.filter(r => r.some(cell => cell !== ''));
+          return { headers, dataRows, hiddenTopRows: 0 };
+        }
+
+        const leaf = headerRows[headerRows.length - 1];
+        const headers = [];
+        for (let c = 0; c < numCols; c++) {
+          if (leaf[c] !== '') {
+            // Cot don: giu nguyen ten cot don, an tieu de gop cot phia tren
+            headers.push(leaf[c]);
+          } else {
+            // Thong tin gop hang: lay ten tu o gop hang phia tren cung cot c
+            let mergedUp = '';
+            for (let m = headerRows.length - 2; m >= 0; m--) {
+              if (headerRows[m][c] !== '') {
+                mergedUp = headerRows[m][c];
+                break;
+              }
+            }
+            headers.push(mergedUp || `Cột ${colToExcelLetter(c)}`);
+          }
+        }
+
+        const dataRows = grid.slice(firstDataRow).filter(r => r.some(cell => cell !== ''));
+        const hiddenTopRows = Math.max(0, firstDataRow - 1);
+        return { headers, dataRows, hiddenTopRows };
       }
 
       // Nhan dien cot co nhieu noi dung de tu dong thu nho chu va an bot
@@ -1225,6 +1563,43 @@
         });
       }
 
+      // Nhan dien cot co o gop hang (rowspan) trong du lieu (VD: cot To, Lop, Khoi, Nhom gop nhieu dong)
+      function detectRowspanColumns(headers, rows) {
+        if (rows.length < 2) return headers.map(() => false);
+
+        return headers.map((h, colIdx) => {
+          const firstVal = String(rows[0][colIdx] || '').trim();
+          if (!firstVal || isNumericOrDate(firstVal)) return false;
+
+          const headerNorm = normalizeText(h);
+          // Khong bao gio gop hang cac cot diem, vi pham, ghi chu, so thu tu, ho ten
+          if (/(diem|cong|tru|vi pham|loi|ghi chu|stt|ho ten|ho va ten|tong|xep loai)/.test(headerNorm)) {
+            return false;
+          }
+
+          let groupHeadersCount = 0;
+          let trailingBlanksCount = 0;
+          let currentGroupBlanks = 0;
+          let inGroup = false;
+
+          for (let r = 0; r < rows.length; r++) {
+            const val = String(rows[r][colIdx] || '').trim();
+            if (val !== '') {
+              if (isNumericOrDate(val)) return false;
+              if (inGroup && currentGroupBlanks > 0) trailingBlanksCount += currentGroupBlanks;
+              groupHeadersCount++;
+              currentGroupBlanks = 0;
+              inGroup = true;
+            } else if (inGroup) {
+              currentGroupBlanks++;
+            }
+          }
+          if (inGroup && currentGroupBlanks > 0) trailingBlanksCount += currentGroupBlanks;
+
+          return groupHeadersCount >= 1 && trailingBlanksCount >= 2 && trailingBlanksCount >= groupHeadersCount;
+        });
+      }
+
       function rebuildTableModel() {
         const cols = state.rawCols || [];
         const rawRows = state.rawRows || [];
@@ -1233,52 +1608,33 @@
           state.headers = [];
           state.rows = [];
           state.longColFlags = [];
+          state.rowspanColFlags = [];
+          state.hiddenTopRowsCount = 0;
           populateColumnFilter();
           renderExcelTable();
           return;
         }
 
+        // Tao ma tran tho bat dau tu Row 1 cua sheet
         const colLabels = cols.map(c => (c && c.label ? String(c.label).trim() : ''));
         const hasAnyLabel = colLabels.some(Boolean);
-        const forceFirstRow = el.optFirstRowHeader.checked;
+        const fullMatrix = hasAnyLabel ? [colLabels, ...rawRows] : rawRows.slice();
 
-        let headers = [];
-        let dataRows = [];
+        const modeVal = el.headerModeSelect.value;
+        const manualRow = modeVal === 'auto' ? 0 : Number(modeVal);
+        const parsed = extractCleanHeadersAndData(fullMatrix, manualRow);
 
-        if ((state.mode === 'csv' || forceFirstRow || !hasAnyLabel) && rawRows.length > 0) {
-          const firstRow = rawRows[0];
-          headers = cols.map((c, idx) => {
-            const val = firstRow[idx] ? String(firstRow[idx]).trim() : '';
-            return val || (c && c.id ? 'Cột ' + c.id : 'Cột ' + (idx + 1));
-          });
-          dataRows = rawRows.slice(1);
-        } else {
-          headers = cols.map((c, idx) => colLabels[idx] || (c && c.id ? 'Cột ' + c.id : 'Cột ' + (idx + 1)));
-          dataRows = rawRows.slice();
-        }
-
-        // Giu nguyen cau truc bang goc (chi bo dong cuoi cung hoan toan rong)
-        dataRows = dataRows.filter(row => row.some(cell => String(cell).trim() !== ''));
-
-        let lastNonEmptyCol = headers.length - 1;
-        while (lastNonEmptyCol > 0) {
-          const headerEmpty = !headers[lastNonEmptyCol] || /^Cột [A-Z0-9]+$/.test(headers[lastNonEmptyCol]);
-          const colHasData = dataRows.some(r => String(r[lastNonEmptyCol] || '').trim() !== '');
-          if (headerEmpty && !colHasData) lastNonEmptyCol--;
-          else break;
-        }
-
-        state.headers = headers.slice(0, lastNonEmptyCol + 1);
-        state.rows = dataRows.map(r => r.slice(0, lastNonEmptyCol + 1));
+        state.headers = parsed.headers;
+        state.rows = parsed.dataRows;
+        state.hiddenTopRowsCount = parsed.hiddenTopRows;
         state.longColFlags = detectLongColumns(state.headers, state.rows);
-        state.currentPage = 1;
+        state.rowspanColFlags = detectRowspanColumns(state.headers, state.rows);
 
         populateColumnFilter();
         renderExcelTable();
 
-        // Neu dang co ket qua tim kiem thi cap nhat lai
         if (state.lastSearchQuery) {
-          executeStrictSearch();
+          executeStrictSearch(true);
         }
       }
 
@@ -1296,7 +1652,6 @@
         }
       }
 
-      // Tim kiem chuan xac: khong ghep tu roi rac giua cac cot, khong lay ten gan dung
       function isCellStrictMatch(cellRaw, queryNorm, exactFullCell) {
         const cellNorm = normalizeText(cellRaw);
         if (!cellNorm) return false;
@@ -1307,12 +1662,10 @@
 
         if (cellNorm === queryNorm) return true;
 
-        // Khop dung cum tu theo ranh gioi tu (VD: "nguyen van an" KHONG khop "nguyen van anh" hay "nguyen thi an")
         try {
           const pattern = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escapeRegExp(queryNorm)}(?:$|[^\\p{L}\\p{N}])`, 'u');
           return pattern.test(cellNorm);
         } catch (_) {
-          // Fallback cho trinh duyet rat cu khong ho tro Unicode property escapes
           const paddedCell = ' ' + cellNorm.replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF]+/gi, ' ') + ' ';
           const paddedQuery = ' ' + queryNorm.replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF]+/gi, ' ').trim() + ' ';
           return paddedCell.includes(paddedQuery);
@@ -1376,19 +1729,23 @@
         return escapedText;
       }
 
-      function executeStrictSearch() {
-        const queryRaw = el.searchInput.value.trim();
+      function executeStrictSearch(isSilentRefresh = false) {
+        const queryRaw = (isSilentRefresh ? state.lastSearchQuery : el.searchInput.value).trim();
         state.lastSearchQuery = queryRaw;
 
         if (!queryRaw) {
           closeSearchResultSection();
-          showToast('Vui lòng nhập thông tin cần tìm.');
-          el.searchInput.focus();
+          if (!isSilentRefresh) {
+            showToast('Vui lòng nhập thông tin cần tìm.');
+            el.searchInput.focus();
+          }
           return;
         }
 
         if (!state.rows.length) {
-          showToast('Chưa có dữ liệu. Hãy tải link Google Sheets trước.');
+          if (!isSilentRefresh) {
+            showToast('Chưa có dữ liệu. Hãy tải link Google Sheets trước.');
+          }
           return;
         }
 
@@ -1421,6 +1778,7 @@
       }
 
       function renderSearchResultSection(queryRaw, matches) {
+        if (!queryRaw) return;
         el.searchResultSection.classList.remove('hidden');
         el.searchResultTitle.innerHTML = `🎯 Kết quả tìm kiếm cho "<em>${escapeHtml(queryRaw)}</em>" (${matches.length} kết quả)`;
         el.btnExportSearchCsv.disabled = matches.length === 0;
@@ -1430,25 +1788,47 @@
           return;
         }
 
+        const hideEmpty = el.optHideEmptyFields.checked;
+        const totalCols = state.headers.length;
+
         const cardsHtml = matches.map((item, idx) => {
+          let visibleCount = 0;
           const kvHtml = state.headers.map((h, cIdx) => {
-            const val = item.row[cIdx] !== undefined ? item.row[cIdx] : '';
-            if (String(val).trim() === '') return '';
+            let val = item.row[cIdx] !== undefined ? item.row[cIdx] : '';
+            // Neu la cot gop hang ma o hien tai trong, lay gia tri tu dong dau nhom phia tren
+            if (!hasFieldData(val) && state.rowspanColFlags[cIdx]) {
+              for (let up = item.rowIndex - 1; up >= 0; up--) {
+                const upVal = state.rows[up][cIdx];
+                if (hasFieldData(upVal)) {
+                  val = upVal;
+                  break;
+                }
+              }
+            }
+
+            const hasData = hasFieldData(val);
+            if (hideEmpty && !hasData) return '';
+
+            visibleCount++;
             return `
               <div class="result-kv">
                 <div class="result-k">${escapeHtml(h)}</div>
-                <div class="result-v">${highlightExactPhrase(val, queryRaw)}</div>
+                <div class="result-v">${hasData ? highlightExactPhrase(val, queryRaw) : '<span style="color:#94a3b8;font-style:italic;">(Không có dữ liệu)</span>'}</div>
               </div>
             `;
           }).join('');
 
+          const countTag = hideEmpty ? ` • ${visibleCount}/${totalCols} mục có dữ liệu` : '';
+
           return `
             <div class="result-item-card">
               <div class="result-item-head">
-                <span>Kết quả #${idx + 1} (Dòng ${item.rowIndex + 1} trong bảng gốc)</span>
+                <span>Kết quả #${idx + 1} (Dòng ${item.rowIndex + 1}${countTag})</span>
                 <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Xem đầy đủ</button>
               </div>
-              <div class="result-kv-list">${kvHtml}</div>
+              <div class="result-kv-list">
+                ${kvHtml || '<div style="color:var(--muted);font-size:0.84rem;padding:4px 0;">Dòng này không có mục thông tin nào có dữ liệu.</div>'}
+              </div>
             </div>
           `;
         }).join('');
@@ -1464,7 +1844,6 @@
         el.btnExportSearchCsv.disabled = true;
       }
 
-      // Render bang du lieu goc (khong bi loc boi o tim kiem)
       function renderExcelTable() {
         const total = state.rows.length;
         el.btnExportAllCsv.disabled = total === 0;
@@ -1472,14 +1851,21 @@
         if (!state.headers.length || total === 0) {
           el.tableWrapper.innerHTML = '<div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>';
           el.paginationBar.style.display = 'none';
-          el.tableMetaInfo.textContent = 'Chạm vào 1 dòng để xem đầy đủ nội dung các cột bị thu gọn.';
+          el.tableMetaInfo.textContent = 'Tự động ẩn tiêu đề gộp cột ở trên đầu — chỉ hiển thị cột đơn và thông tin gộp hàng.';
           return;
         }
 
         const longCount = state.longColFlags.filter(Boolean).length;
-        el.tableMetaInfo.textContent = longCount > 0
-          ? `Đã tự động thu nhỏ & rút gọn ${longCount} cột nhiều chữ để hiển thị được nhiều hàng hơn — chạm vào dòng để xem đủ.`
-          : 'Hiển thị đầy đủ cấu trúc bảng gốc — chạm vào dòng để xem chi tiết.';
+        const infoParts = [];
+        if (state.hiddenTopRowsCount > 0) {
+          infoParts.push(`Đã ẩn ${state.hiddenTopRowsCount} dòng tiêu đề/gộp cột phía trên`);
+        }
+        if (longCount > 0) {
+          infoParts.push(`thu gọn ${longCount} cột nhiều chữ`);
+        }
+        el.tableMetaInfo.textContent = infoParts.length
+          ? `${infoParts.join(', ')} — chạm vào dòng để xem đủ.`
+          : 'Hiển thị tiêu đề cột đơn & thông tin gộp hàng — chạm vào dòng để xem chi tiết.';
 
         const pageSize = Number(el.pageSize.value);
         state.pageSize = pageSize;
@@ -1489,6 +1875,48 @@
         const start = pageSize === 0 ? 0 : (state.currentPage - 1) * pageSize;
         const end = pageSize === 0 ? total : Math.min(start + pageSize, total);
         const pageRows = state.rows.slice(start, end);
+
+        // Tinh rowspan cho cac cot gop hang trong trang hien tai
+        const spanMatrix = Array.from({ length: pageRows.length }, () => new Array(state.headers.length).fill(1));
+        for (let c = 0; c < state.headers.length; c++) {
+          if (!state.rowspanColFlags[c]) continue;
+          let r = 0;
+          while (r < pageRows.length) {
+            const val = String(pageRows[r][c] || '').trim();
+            if (val !== '') {
+              let span = 1;
+              while (r + span < pageRows.length && String(pageRows[r + span][c] || '').trim() === '') {
+                spanMatrix[r + span][c] = 0; // 0 = da bi gop vao o phia tren
+                span++;
+              }
+              spanMatrix[r][c] = span;
+              r += span;
+            } else {
+              // Dong dau trang nam giua 1 nhom gop hang: lay gia tri tu phia tren neu co
+              let inherited = '';
+              for (let up = start + r - 1; up >= 0; up--) {
+                const upVal = String(state.rows[up][c] || '').trim();
+                if (upVal !== '') {
+                  inherited = upVal;
+                  break;
+                }
+              }
+              if (inherited) {
+                pageRows[r] = pageRows[r].slice();
+                pageRows[r][c] = inherited;
+                let span = 1;
+                while (r + span < pageRows.length && String(pageRows[r + span][c] || '').trim() === '') {
+                  spanMatrix[r + span][c] = 0;
+                  span++;
+                }
+                spanMatrix[r][c] = span;
+                r += span;
+              } else {
+                r++;
+              }
+            }
+          }
+        }
 
         let html = '<table class="excel-table"><thead><tr><th class="col-stt">#</th>';
         state.headers.forEach((h, idx) => {
@@ -1501,9 +1929,16 @@
           const originIdx = start + rIdx;
           html += `<tr data-row-idx="${originIdx}"><td class="col-stt">${originIdx + 1}</td>`;
           for (let c = 0; c < state.headers.length; c++) {
+            const span = spanMatrix[rIdx][c];
+            if (span === 0) continue;
+
             const val = row[c] !== undefined ? row[c] : '';
             const safeVal = linkifyEscaped(escapeHtml(val));
-            if (state.longColFlags[c]) {
+            const rowspanAttr = span > 1 ? ` rowspan="${span}"` : '';
+
+            if (span > 1) {
+              html += `<td class="col-compact col-rowspan"${rowspanAttr}>${safeVal}</td>`;
+            } else if (state.longColFlags[c]) {
               html += `<td class="col-long" title="${escapeHtml(val)}"><div class="cell-clamp">${safeVal}</div></td>`;
             } else {
               html += `<td class="col-compact">${safeVal}</td>`;
@@ -1527,19 +1962,35 @@
         }
       }
 
-      function openRowDetail(originIndex) {
+      function openRowDetail(originIndex, hideEmpty = false) {
         const row = state.rows[originIndex];
         if (!row) return;
-        el.modalTitle.textContent = `Chi tiết dòng #${originIndex + 1}`;
-        el.modalBody.innerHTML = state.headers.map((h, i) => {
-          const val = row[i] !== undefined ? row[i] : '';
+        el.modalTitle.textContent = hideEmpty
+          ? `Chi tiết có dữ liệu — Dòng #${originIndex + 1}`
+          : `Chi tiết đầy đủ — Dòng #${originIndex + 1}`;
+
+        const itemsHtml = state.headers.map((h, i) => {
+          let val = row[i] !== undefined ? row[i] : '';
+          if (!hasFieldData(val) && state.rowspanColFlags[i]) {
+            for (let up = originIndex - 1; up >= 0; up--) {
+              const upVal = state.rows[up][i];
+              if (hasFieldData(upVal)) {
+                val = upVal;
+                break;
+              }
+            }
+          }
+          const hasData = hasFieldData(val);
+          if (hideEmpty && !hasData) return '';
           return `
             <div class="detail-item">
               <div class="detail-label">${escapeHtml(h)}</div>
-              <div class="detail-value">${val ? linkifyEscaped(escapeHtml(val)) : '<span style="color:#94a3b8;">(Trống)</span>'}</div>
+              <div class="detail-value">${hasData ? linkifyEscaped(escapeHtml(val)) : '<span style="color:#94a3b8;">(Trống)</span>'}</div>
             </div>
           `;
         }).join('');
+
+        el.modalBody.innerHTML = itemsHtml || '<div class="empty-state">Dòng này không có mục thông tin nào có dữ liệu.</div>';
         el.detailModal.classList.add('open');
       }
 
@@ -1550,7 +2001,17 @@
       // Quan ly luu cuc bo tren thiet bi nay
       function getSavedLink() {
         try {
-          const raw = localStorage.getItem(STORAGE_SAVED_KEY);
+          let raw = localStorage.getItem(STORAGE_SAVED_KEY);
+          if (!raw) {
+            for (const oldKey of LEGACY_KEYS) {
+              const legacy = localStorage.getItem(oldKey);
+              if (legacy) {
+                raw = legacy;
+                localStorage.setItem(STORAGE_SAVED_KEY, legacy);
+                break;
+              }
+            }
+          }
           return raw ? JSON.parse(raw) : null;
         } catch (_) {
           return null;
@@ -1570,9 +2031,14 @@
 
       function savePayloadToDevice(payload) {
         try {
-          localStorage.setItem(STORAGE_SAVED_KEY, JSON.stringify(payload));
+          const fullPayload = {
+            url: payload.url,
+            sheetName: payload.sheetName || '',
+            autoRefresh: el.optAutoRefresh.checked
+          };
+          localStorage.setItem(STORAGE_SAVED_KEY, JSON.stringify(fullPayload));
           updateSaveBadge();
-          showToast('✅ Đã lưu link trên máy này!');
+          showToast('✅ Đã lưu link & bật tự động cập nhật trên máy này!');
         } catch (_) {
           showToast('❌ Không thể lưu bộ nhớ cục bộ trên trình duyệt này.');
         }
@@ -1590,7 +2056,10 @@
       }
 
       function deleteLinkFromDevice() {
-        try { localStorage.removeItem(STORAGE_SAVED_KEY); } catch (_) {}
+        try {
+          localStorage.removeItem(STORAGE_SAVED_KEY);
+          for (const oldKey of LEGACY_KEYS) localStorage.removeItem(oldKey);
+        } catch (_) {}
 
         el.sheetUrl.value = '';
         el.sheetName.value = '';
@@ -1600,12 +2069,17 @@
         state.headers = [];
         state.rows = [];
         state.longColFlags = [];
+        state.rowspanColFlags = [];
+        state.hiddenTopRowsCount = 0;
         state.currentPage = 1;
+        state.lastLoadedAt = 0;
 
         closeSearchResultSection();
         populateColumnFilter();
         renderExcelTable();
         updateSaveBadge();
+        updateLastSyncBadge(0);
+        el.btnRefreshNow.disabled = true;
         el.sheetBadge.textContent = 'Chưa tải dữ liệu';
         setStatus('', '');
         setLinkPanelVisible(true);
@@ -1638,43 +2112,62 @@
         showToast('Đã xuất file CSV!');
       }
 
-      async function loadSheet(isAutoInit = false) {
+      async function loadSheet(options = {}) {
+        const { isAutoInit = false, isBackgroundRefresh = false } = options;
+        if (state.isLoading) return;
+
         const url = el.sheetUrl.value.trim();
         const sheetName = el.sheetName.value.trim();
         const parsed = parseSheetUrl(url);
 
         if (!parsed) {
-          setStatus('error', 'Link không hợp lệ. Hãy dán link dạng <code>https://docs.google.com/spreadsheets/d/...</code>.');
-          setLinkPanelVisible(true);
+          if (!isBackgroundRefresh) {
+            setStatus('error', 'Link không hợp lệ. Hãy dán link dạng <code>https://docs.google.com/spreadsheets/d/...</code>.');
+            setLinkPanelVisible(true);
+          }
           return;
         }
 
+        state.isLoading = true;
         el.btnLoad.disabled = true;
-        el.sheetBadge.textContent = 'Đang tải...';
-        setStatus('info', '⏳ Đang tải dữ liệu từ Google Sheets...');
+        el.btnRefreshNow.disabled = true;
+        el.sheetBadge.textContent = isBackgroundRefresh ? 'Đang cập nhật...' : 'Đang tải...';
+        if (!isBackgroundRefresh) {
+          setStatus('info', '⏳ Đang tải dữ liệu mới nhất từ Google Sheets...');
+        }
 
         try {
           const result = await fetchSheetMultiStrategy(parsed, sheetName);
           state.mode = result.mode;
           state.rawCols = result.rawCols;
           state.rawRows = result.rawRows;
+          state.lastLoadedAt = Date.now();
 
           rebuildTableModel();
 
           el.sheetBadge.textContent = `${state.rows.length.toLocaleString('vi-VN')} dòng • ${state.headers.length} cột`;
-          setStatus('success', `✅ Tải thành công <strong>${state.rows.length.toLocaleString('vi-VN')}</strong> dòng và <strong>${state.headers.length}</strong> cột.`);
+          updateLastSyncBadge(state.lastLoadedAt);
+
+          if (isBackgroundRefresh) {
+            setStatus('success', `🔄 Đã tự động cập nhật dữ liệu mới nhất lúc <strong>${formatTimeNow(state.lastLoadedAt)}</strong> (${state.rows.length.toLocaleString('vi-VN')} dòng).`);
+            showToast('🔄 Đã cập nhật dữ liệu mới nhất!');
+          } else {
+            setStatus('success', `✅ Tải thành công <strong>${state.rows.length.toLocaleString('vi-VN')}</strong> dòng và <strong>${state.headers.length}</strong> cột (cập nhật lúc ${formatTimeNow(state.lastLoadedAt)}).`);
+          }
 
           const saved = getSavedLink();
           const alreadySameSaved = saved && saved.url === url && (saved.sheetName || '') === sheetName;
 
-          if (isAutoInit || alreadySameSaved) {
+          if (isAutoInit || isBackgroundRefresh || alreadySameSaved) {
             setLinkPanelVisible(false);
           } else {
             openSavePrompt({ url, sheetName });
           }
         } catch (err) {
           el.sheetBadge.textContent = 'Lỗi tải dữ liệu';
-          setLinkPanelVisible(true);
+          if (!isBackgroundRefresh) {
+            setLinkPanelVisible(true);
+          }
           if (err.code === 'PRIVATE_SHEET') {
             setStatus(
               'error',
@@ -1687,12 +2180,15 @@
             );
           }
         } finally {
+          state.isLoading = false;
           el.btnLoad.disabled = false;
+          el.btnRefreshNow.disabled = !el.sheetUrl.value.trim();
         }
       }
 
       // Gan su kien
-      el.btnLoad.addEventListener('click', () => loadSheet(false));
+      el.btnLoad.addEventListener('click', () => loadSheet({ isAutoInit: false }));
+      el.btnRefreshNow.addEventListener('click', () => loadSheet({ isBackgroundRefresh: true }));
       el.btnDeleteLink.addEventListener('click', deleteLinkFromDevice);
 
       el.btnToggleLinkPanel.addEventListener('click', () => {
@@ -1701,6 +2197,13 @@
       });
 
       el.btnHideLinkPanel.addEventListener('click', () => setLinkPanelVisible(false));
+
+      el.optAutoRefresh.addEventListener('change', () => {
+        const saved = getSavedLink();
+        if (saved && saved.url) {
+          savePayloadToDevice(saved);
+        }
+      });
 
       el.btnPromptSaveOk.addEventListener('click', () => {
         if (state.pendingSavePayload) savePayloadToDevice(state.pendingSavePayload);
@@ -1729,12 +2232,12 @@
         }
       });
 
-      el.sheetUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSheet(false); });
-      el.sheetName.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSheet(false); });
+      el.sheetUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSheet({ isAutoInit: false }); });
+      el.sheetName.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSheet({ isAutoInit: false }); });
 
-      el.btnSearch.addEventListener('click', executeStrictSearch);
+      el.btnSearch.addEventListener('click', () => executeStrictSearch(false));
       el.searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') executeStrictSearch();
+        if (e.key === 'Enter') executeStrictSearch(false);
       });
 
       el.btnClearSearch.addEventListener('click', () => {
@@ -1744,12 +2247,18 @@
       });
 
       el.btnCloseSearchResult.addEventListener('click', closeSearchResultSection);
-      el.optExactCell.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(); });
-      el.optNoAccent.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(); });
+      el.optExactCell.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(false); });
+      el.optNoAccent.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(false); });
+      el.optHideEmptyFields.addEventListener('change', () => {
+        if (state.lastSearchQuery) renderSearchResultSection(state.lastSearchQuery, state.searchMatches);
+      });
+      el.optHideZeroAndNone.addEventListener('change', () => {
+        if (state.lastSearchQuery) renderSearchResultSection(state.lastSearchQuery, state.searchMatches);
+      });
 
       el.searchResultBody.addEventListener('click', (e) => {
         const btn = e.target.closest('button[data-open-origin]');
-        if (btn) openRowDetail(Number(btn.dataset.openOrigin));
+        if (btn) openRowDetail(Number(btn.dataset.openOrigin), el.optHideEmptyFields.checked);
       });
 
       el.btnExportSearchCsv.addEventListener('click', () => {
@@ -1760,7 +2269,7 @@
         exportCsvRows(state.rows, 'bang-du-lieu-goc.csv');
       });
 
-      el.optFirstRowHeader.addEventListener('change', rebuildTableModel);
+      el.headerModeSelect.addEventListener('change', rebuildTableModel);
 
       el.pageSize.addEventListener('change', () => {
         state.currentPage = 1;
@@ -1778,7 +2287,7 @@
 
       el.tableWrapper.addEventListener('click', (e) => {
         const tr = e.target.closest('tr[data-row-idx]');
-        if (tr) openRowDetail(Number(tr.dataset.rowIdx));
+        if (tr) openRowDetail(Number(tr.dataset.rowIdx), false);
       });
 
       el.btnCloseModal.addEventListener('click', closeRowDetail);
@@ -1796,14 +2305,44 @@
         }
       });
 
-      // Khoi tao
+      // Tu dong cap nhat khi trinh duyet dien thoai khoi phuc tab tu bo nho (bfcache)
+      window.addEventListener('pageshow', (e) => {
+        if (!el.optAutoRefresh.checked) return;
+        const saved = getSavedLink();
+        const activeUrl = (saved && saved.url) ? saved.url : el.sheetUrl.value.trim();
+        if (!activeUrl) return;
+        if (saved && saved.url) {
+          el.sheetUrl.value = saved.url;
+          el.sheetName.value = saved.sheetName || '';
+        }
+        if (e.persisted || Date.now() - state.lastLoadedAt > AUTO_REFRESH_MIN_INTERVAL_MS) {
+          loadSheet({ isAutoInit: true, isBackgroundRefresh: true });
+        }
+      });
+
+      // Tu dong cap nhat khi chuyen tu ung dung khac quay lai tab Chrome sau > 12 giay
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') return;
+        if (!el.optAutoRefresh.checked) return;
+        const activeUrl = el.sheetUrl.value.trim();
+        if (!activeUrl) return;
+        if (Date.now() - state.lastLoadedAt > AUTO_REFRESH_MIN_INTERVAL_MS) {
+          loadSheet({ isAutoInit: true, isBackgroundRefresh: true });
+        }
+      });
+
+      // Khoi tao moi lan mo trang
       updateSaveBadge();
       const saved = getSavedLink();
       if (saved && saved.url) {
         el.sheetUrl.value = saved.url;
         el.sheetName.value = saved.sheetName || '';
+        if (typeof saved.autoRefresh === 'boolean') {
+          el.optAutoRefresh.checked = saved.autoRefresh;
+        }
         setLinkPanelVisible(false);
-        loadSheet(true);
+        el.btnRefreshNow.disabled = false;
+        loadSheet({ isAutoInit: true });
       } else {
         setLinkPanelVisible(true);
       }
