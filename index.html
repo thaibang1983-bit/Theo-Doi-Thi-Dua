@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Tra cứu dữ liệu Google Sheets</title>
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
+      --row-alt: #f8fafc;
+      --row-hover: #eff6ff;
+      --highlight: #fef08a;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --radius: 10px;
+      --shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      padding: 12px;
+    }
+
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 0.76rem;
+      background: #e0ecff;
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .badge.saved {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge.unsaved {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .card.hidden {
+      display: none;
+    }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .section-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="url"],
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      color: var(--text);
+      background: #fff;
+      min-height: 40px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px 14px;
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: var(--success-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: var(--danger-hover);
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #e2e8f0;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      min-height: 32px;
+      font-size: 0.8rem;
+    }
+
+    .status-msg {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      margin-bottom: 12px;
+      display: none;
+      line-height: 1.45;
+    }
+
+    .status-msg.info {
+      display: block;
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-msg.error {
+      display: block;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .status-msg.success {
+      display: block;
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* Khu vuc tim kiem */
+    .search-grid {
+      display: grid;
+      grid-template-columns: 1fr 210px auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-options {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .checkbox-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      user-select: none;
+      color: var(--text);
+    }
+
+    /* Khu vuc ket qua tim kiem rieng biet */
+    .search-result-card {
+      border-left: 4px solid var(--primary);
+      background: #f8fbff;
+    }
+
+    .result-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 10px;
+    }
+
+    .result-item-card {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .result-item-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding-bottom: 5px;
+      border-bottom: 1px dashed var(--border-light);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .result-kv-list {
+      display: grid;
+      gap: 4px;
+      font-size: 0.86rem;
+    }
+
+    .result-kv {
+      display: grid;
+      grid-template-columns: minmax(90px, 38%) 1fr;
+      gap: 8px;
+      padding: 2px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .result-kv:last-child {
+      border-bottom: none;
+    }
+
+    .result-k {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      word-break: break-word;
+    }
+
+    .result-v {
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* Bang du lieu goc giong Excel */
+    .table-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .table-wrapper {
+      overflow: auto;
+      max-height: 70vh;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table.excel-table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      background: #fff;
+    }
+
+    table.excel-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #1e3a5f;
+      color: #fff;
+      text-align: left;
+      padding: 7px 9px;
+      font-weight: 600;
+      font-size: 0.81rem;
+      white-space: nowrap;
+      border-right: 1px solid rgba(255, 255, 255, 0.18);
+      border-bottom: 2px solid #0f2540;
+    }
+
+    table.excel-table thead th.col-long-header {
+      max-width: 170px;
+      white-space: normal;
+      line-height: 1.2;
+      font-size: 0.76rem;
+    }
+
+    table.excel-table tbody td {
+      padding: 5px 9px;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      line-height: 1.3;
+    }
+
+    table.excel-table tbody td.col-compact {
+      white-space: nowrap;
+    }
+
+    /* Cot nhieu noi dung: thu nho chu + an bot de hang gon, hien thi duoc nhieu ten */
+    table.excel-table tbody td.col-long {
+      font-size: 0.73rem;
+      line-height: 1.22;
+      color: #475569;
+      max-width: 175px;
+      min-width: 115px;
+      padding: 4px 7px;
+    }
+
+    .cell-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: break-word;
+    }
+
+    table.excel-table tbody tr:nth-child(even) {
+      background: var(--row-alt);
+    }
+
+    table.excel-table tbody tr:hover {
+      background: var(--row-hover);
+      cursor: pointer;
+    }
+
+    .col-stt {
+      width: 42px;
+      text-align: center !important;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      background: #f1f5f9;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    table.excel-table thead th.col-stt {
+      background: #162d4a;
+      color: #e2e8f0;
+      z-index: 3;
+    }
+
+    mark {
+      background: var(--highlight);
+      color: #000;
+      padding: 0 2px;
+      border-radius: 3px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 14px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pagination {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.84rem;
+    }
+
+    .page-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Modal chung */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 100;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+
+    .modal-sm {
+      max-width: 420px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .modal-header h2 {
+      font-size: 1rem;
+    }
+
+    .modal-body {
+      padding: 14px 16px;
+      overflow-y: auto;
+      font-size: 0.92rem;
+    }
+
+    .modal-footer {
+      padding: 12px 16px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .detail-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .detail-item {
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 7px;
+    }
+
+    .detail-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .detail-value {
+      font-size: 0.92rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #0f172a;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 200;
+      text-align: center;
+      max-width: 92vw;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+
+      .card {
+        padding: 11px;
+      }
+
+      .form-grid,
+      .search-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-group-full > button {
+        flex: 1 1 calc(50% - 4px);
+      }
+
+      .result-cards-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <span>📊</span>
+        <span>Tra cứu Google Sheets</span>
+      </h1>
+      <div class="header-actions">
+        <span class="badge unsaved" id="saveBadge">Chưa lưu trên máy</span>
+        <span class="badge" id="sheetBadge">Chưa tải dữ liệu</span>
+        <button type="button" class="btn-secondary btn-sm" id="btnToggleLinkPanel">🔗 Ẩn khung nhập link</button>
+      </div>
+    </header>
+
+    <!-- Thong bao trang thai luon dat o tren cung de de nhin -->
+    <div id="statusMsg" class="status-msg"></div>
+
+    <!-- 1. Khu vuc nhap link (co the an/hien) -->
+    <section class="card" id="linkPanel">
+      <div class="section-header">
+        <div class="section-title">🔗 Thiết lập link Google Sheets</div>
+        <button type="button" class="btn-secondary btn-sm" id="btnHideLinkPanel">🙈 Ẩn khu vực này</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="sheetUrl">Đường dẫn Google Sheets (chế độ công khai: Bất kỳ ai có đường liên kết → Người xem)</label>
+          <input
+            type="url"
+            id="sheetUrl"
+            placeholder="Dán link Google Sheets vào đây..."
+            autocomplete="off"
+          >
+        </div>
+        <div class="field">
+          <label for="sheetName">Tên trang tính / GID (tùy chọn)</label>
+          <input type="text" id="sheetName" placeholder="Để trống = trang đầu" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="btn-group btn-group-full">
+        <button type="button" class="btn-primary" id="btnLoad">📥 Tải dữ liệu</button>
+        <button type="button" class="btn-secondary" id="btnPaste">📋 Dán link</button>
+        <button type="button" class="btn-danger" id="btnDeleteLink">🗑️ Xóa link</button>
+      </div>
+    </section>
+
+    <!-- 2. Khu vuc tim kiem chuan xac -->
+    <section class="card" id="searchPanel">
+      <div class="section-header">
+        <div class="section-title">🔍 Tìm kiếm thông tin chính xác</div>
+        <span style="font-size:0.78rem;color:var(--muted);">Nhập từ khóa rồi bấm <strong>Tìm kiếm</strong> (không hiện gợi ý gần đúng)</span>
+      </div>
+
+      <div class="search-grid">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Nhập chính xác họ tên hoặc thông tin cần tìm..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        >
+        <select id="columnFilter" aria-label="Chọn cột tìm kiếm">
+          <option value="all">Tìm trong tất cả cột</option>
+        </select>
+        <div class="btn-group">
+          <button type="button" class="btn-primary" id="btnSearch">🔍 Tìm kiếm</button>
+          <button type="button" class="btn-secondary" id="btnClearSearch">✖ Xóa tìm</button>
+        </div>
+      </div>
+
+      <div class="search-options">
+        <div class="checkbox-group">
+          <label title="Bật để chỉ nhận kết quả khớp toàn bộ nội dung của ô (ví dụ: đánh đủ 'Nguyễn Văn An' sẽ không khớp 'Lê Nguyễn Văn An')">
+            <input type="checkbox" id="optExactCell">
+            Khớp tuyệt đối toàn bộ ô
+          </label>
+          <label>
+            <input type="checkbox" id="optNoAccent" checked>
+            Không phân biệt dấu tiếng Việt
+          </label>
+        </div>
+        <span id="searchHint">Chỉ hiển thị kết quả đúng chính xác từ khóa đã nhập</span>
+      </div>
+    </section>
+
+    <!-- Khu vuc hien thi rieng cho ket qua tim kiem -->
+    <section class="card search-result-card hidden" id="searchResultSection">
+      <div class="section-header">
+        <div class="section-title" id="searchResultTitle">🎯 Kết quả tìm kiếm</div>
+        <div class="btn-group">
+          <button type="button" class="btn-success btn-sm" id="btnExportSearchCsv" disabled>⬇ Xuất CSV kết quả tìm</button>
+          <button type="button" class="btn-secondary btn-sm" id="btnCloseSearchResult">✖ Đóng kết quả</button>
+        </div>
+      </div>
+      <div id="searchResultBody"></div>
+    </section>
+
+    <!-- 3 & 4. Bang du lieu tong hop goc (tach biet hoan toan voi khu vuc tim kiem) -->
+    <section class="card" id="excelSection">
+      <div class="section-header">
+        <div class="section-title">📋 Bảng dữ liệu gốc (Tổng hợp Excel)</div>
+        <div class="btn-group">
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:0.8rem;color:var(--muted);cursor:pointer;">
+            <input type="checkbox" id="optFirstRowHeader">
+            Ép dòng đầu làm tiêu đề
+          </label>
+          <button type="button" class="btn-secondary btn-sm" id="btnExportAllCsv" disabled>⬇ Xuất CSV</button>
+        </div>
+      </div>
+
+      <div class="table-toolbar">
+        <span id="tableMetaInfo">Chạm vào 1 dòng để xem đầy đủ nội dung các cột bị thu gọn.</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label for="pageSize">Hiển thị:</label>
+          <select id="pageSize" style="width:auto;min-height:32px;padding:3px 8px;font-size:0.82rem;">
+            <option value="50">50 dòng</option>
+            <option value="100" selected>100 dòng</option>
+            <option value="250">250 dòng</option>
+            <option value="500">500 dòng</option>
+            <option value="0">Tất cả</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper" id="tableWrapper">
+        <div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>
+      </div>
+
+      <div class="pagination" id="paginationBar" style="display:none;">
+        <div id="pageInfo">Trang 1 / 1</div>
+        <div class="page-controls">
+          <button type="button" class="btn-secondary btn-sm" id="btnFirst">«</button>
+          <button type="button" class="btn-secondary btn-sm" id="btnPrev">‹ Trước</button>
+          <button type="button" class="btn-secondary btn-sm" id="btnNext">Sau ›</button>
+          <button type="button" class="btn-secondary btn-sm" id="btnLast">»</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal hoi luu link sau khi tai thanh cong (mac dinh OK = Luu) -->
+  <div class="modal-backdrop" id="savePromptModal" role="dialog" aria-modal="true" aria-labelledby="savePromptTitle">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 id="savePromptTitle">💾 Lưu link trên máy này?</h2>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:8px;">Tải dữ liệu thành công! Bạn có muốn lưu link này trên thiết bị này để lần sau tự động mở không?</p>
+        <p style="font-size:0.82rem;color:var(--muted);">Link chỉ lưu cục bộ trên điện thoại/máy hiện tại. Sau khi chọn, khung nhập link sẽ tự động ẩn gọn.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="btnPromptNoSave">Không lưu</button>
+        <button type="button" class="btn-primary" id="btnPromptSaveOk">OK (Lưu link)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal xem chi tiet day du 1 dong -->
+  <div class="modal-backdrop" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Chi tiết dòng dữ liệu</h2>
+        <button type="button" class="btn-secondary btn-sm" id="btnCloseModal">✖ Đóng</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-list" id="modalBody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const STORAGE_SAVED_KEY = 'gsheet_local_device_link_v3';
+
+      const state = {
+        mode: '',
+        rawCols: [],
+        rawRows: [],
+        headers: [],
+        rows: [],
+        longColFlags: [],
+        searchMatches: [], // [{ rowIndex, row }]
+        lastSearchQuery: '',
+        currentPage: 1,
+        pageSize: 100,
+        pendingSavePayload: null
+      };
+
+      const el = {
+        linkPanel: document.getElementById('linkPanel'),
+        btnToggleLinkPanel: document.getElementById('btnToggleLinkPanel'),
+        btnHideLinkPanel: document.getElementById('btnHideLinkPanel'),
+        sheetUrl: document.getElementById('sheetUrl'),
+        sheetName: document.getElementById('sheetName'),
+        btnLoad: document.getElementById('btnLoad'),
+        btnPaste: document.getElementById('btnPaste'),
+        btnDeleteLink: document.getElementById('btnDeleteLink'),
+        saveBadge: document.getElementById('saveBadge'),
+        sheetBadge: document.getElementById('sheetBadge'),
+        statusMsg: document.getElementById('statusMsg'),
+        searchInput: document.getElementById('searchInput'),
+        columnFilter: document.getElementById('columnFilter'),
+        btnSearch: document.getElementById('btnSearch'),
+        btnClearSearch: document.getElementById('btnClearSearch'),
+        optExactCell: document.getElementById('optExactCell'),
+        optNoAccent: document.getElementById('optNoAccent'),
+        searchResultSection: document.getElementById('searchResultSection'),
+        searchResultTitle: document.getElementById('searchResultTitle'),
+        searchResultBody: document.getElementById('searchResultBody'),
+        btnExportSearchCsv: document.getElementById('btnExportSearchCsv'),
+        btnCloseSearchResult: document.getElementById('btnCloseSearchResult'),
+        optFirstRowHeader: document.getElementById('optFirstRowHeader'),
+        btnExportAllCsv: document.getElementById('btnExportAllCsv'),
+        tableMetaInfo: document.getElementById('tableMetaInfo'),
+        tableWrapper: document.getElementById('tableWrapper'),
+        pageSize: document.getElementById('pageSize'),
+        paginationBar: document.getElementById('paginationBar'),
+        pageInfo: document.getElementById('pageInfo'),
+        btnFirst: document.getElementById('btnFirst'),
+        btnPrev: document.getElementById('btnPrev'),
+        btnNext: document.getElementById('btnNext'),
+        btnLast: document.getElementById('btnLast'),
+        savePromptModal: document.getElementById('savePromptModal'),
+        btnPromptSaveOk: document.getElementById('btnPromptSaveOk'),
+        btnPromptNoSave: document.getElementById('btnPromptNoSave'),
+        detailModal: document.getElementById('detailModal'),
+        modalTitle: document.getElementById('modalTitle'),
+        modalBody: document.getElementById('modalBody'),
+        btnCloseModal: document.getElementById('btnCloseModal'),
+        toast: document.getElementById('toast')
+      };
+
+      function showToast(text) {
+        el.toast.textContent = text;
+        el.toast.classList.add('show');
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => el.toast.classList.remove('show'), 2500);
+      }
+
+      function setStatus(type, htmlText) {
+        el.statusMsg.className = 'status-msg' + (type ? ' ' + type : '');
+        el.statusMsg.innerHTML = htmlText || '';
+      }
+
+      function setLinkPanelVisible(visible) {
+        if (visible) {
+          el.linkPanel.classList.remove('hidden');
+          el.btnToggleLinkPanel.textContent = '🙈 Ẩn khung nhập link';
+        } else {
+          el.linkPanel.classList.add('hidden');
+          el.btnToggleLinkPanel.textContent = '🔗 Hiện khung nhập link';
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function escapeRegExp(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
+      function removeVietnameseTones(str) {
+        return String(str)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/Đ/g, 'D');
+      }
+
+      function normalizeText(str) {
+        const cleaned = String(str || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        return el.optNoAccent.checked ? removeVietnameseTones(cleaned) : cleaned;
+      }
+
+      function parseSheetUrl(url) {
+        const cleaned = (url || '').trim();
+        if (!cleaned) return null;
+
+        let gid = '';
+        const gidMatch = cleaned.match(/[?&#]gid=(\d+)/);
+        if (gidMatch) gid = gidMatch[1];
+
+        const pubMatch = cleaned.match(/\/spreadsheets\/d\/e\/([a-zA-Z0-9-_]+)/);
+        if (pubMatch) return { type: 'pub', id: pubMatch[1], gid };
+
+        const idMatch = cleaned.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+        if (idMatch) return { type: 'standard', id: idMatch[1], gid };
+
+        if (/^[a-zA-Z0-9-_]{20,}$/.test(cleaned)) {
+          return { type: 'standard', id: cleaned, gid };
+        }
+        return null;
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let cell = '';
+        let inQuotes = false;
+        const cleanText = text.replace(/^\uFEFF/, '');
+
+        for (let i = 0; i < cleanText.length; i++) {
+          const ch = cleanText[i];
+          const next = cleanText[i + 1];
+
+          if (inQuotes) {
+            if (ch === '"' && next === '"') {
+              cell += '"';
+              i++;
+            } else if (ch === '"') {
+              inQuotes = false;
+            } else {
+              cell += ch;
+            }
+          } else {
+            if (ch === '"') {
+              inQuotes = true;
+            } else if (ch === ',') {
+              row.push(cell);
+              cell = '';
+            } else if (ch === '\r' && next === '\n') {
+              row.push(cell);
+              rows.push(row);
+              row = [];
+              cell = '';
+              i++;
+            } else if (ch === '\n' || ch === '\r') {
+              row.push(cell);
+              rows.push(row);
+              row = [];
+              cell = '';
+            } else {
+              cell += ch;
+            }
+          }
+        }
+
+        if (cell.length > 0 || row.length > 0) {
+          row.push(cell);
+          rows.push(row);
+        }
+        return rows;
+      }
+
+      function formatGvizCell(cell) {
+        if (!cell) return '';
+        if (cell.f !== undefined && cell.f !== null && String(cell.f).trim() !== '') {
+          return String(cell.f);
+        }
+        if (cell.v === undefined || cell.v === null) return '';
+
+        const val = cell.v;
+        if (typeof val === 'string') {
+          const dateMatch = val.match(/^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)$/);
+          if (dateMatch) {
+            const y = dateMatch[1];
+            const m = String(Number(dateMatch[2]) + 1).padStart(2, '0');
+            const d = String(Number(dateMatch[3])).padStart(2, '0');
+            if (dateMatch[4] !== undefined) {
+              const hh = String(Number(dateMatch[4])).padStart(2, '0');
+              const mm = String(Number(dateMatch[5])).padStart(2, '0');
+              return `${d}/${m}/${y} ${hh}:${mm}`;
+            }
+            return `${d}/${m}/${y}`;
+          }
+          return val;
+        }
+        return String(val);
+      }
+
+      function isLoginOrHtml(text) {
+        const trimmed = (text || '').trim().slice(0, 300).toLowerCase();
+        return trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html') || trimmed.includes('accounts.google.com/servicelogin');
+      }
+
+      function buildSheetParams(baseParams, gid, sheetName) {
+        const customSheet = (sheetName || '').trim();
+        if (customSheet) {
+          if (/^\d+$/.test(customSheet)) baseParams.set('gid', customSheet);
+          else baseParams.set('sheet', customSheet);
+        } else if (gid) {
+          baseParams.set('gid', gid);
+        }
+        return baseParams;
+      }
+
+      async function fetchWithTimeout(url, timeoutMs = 12000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const res = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            signal: controller.signal
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return await res.text();
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      async function tryFetchGvizJson(parsed, sheetName) {
+        const params = buildSheetParams(new URLSearchParams({ tqx: 'out:json' }), parsed.gid, sheetName);
+        const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
+        const text = await fetchWithTimeout(url);
+
+        if (isLoginOrHtml(text)) {
+          const err = new Error('PRIVATE_SHEET');
+          err.code = 'PRIVATE_SHEET';
+          throw err;
+        }
+
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start === -1 || end === -1 || end <= start) {
+          throw new Error('Phản hồi GViz JSON không hợp lệ.');
+        }
+
+        const data = JSON.parse(text.slice(start, end + 1));
+        if (data.status === 'error') {
+          const msg = data.errors && data.errors[0]
+            ? (data.errors[0].detailed_message || data.errors[0].message)
+            : 'Lỗi truy vấn Google Sheets.';
+          throw new Error(msg);
+        }
+
+        const table = data.table || {};
+        const cols = table.cols || [];
+        const rows = (table.rows || []).map(r => {
+          const cells = r && r.c ? r.c : [];
+          return cols.map((_, idx) => formatGvizCell(cells[idx]));
+        });
+
+        return { mode: 'gviz', rawCols: cols, rawRows: rows, source: 'GViz JSON' };
+      }
+
+      async function tryFetchGvizCsv(parsed, sheetName) {
+        let url = '';
+        if (parsed.type === 'pub') {
+          const p = new URLSearchParams({ output: 'csv' });
+          if (parsed.gid) {
+            p.set('gid', parsed.gid);
+            p.set('single', 'true');
+          }
+          url = `https://docs.google.com/spreadsheets/d/e/${encodeURIComponent(parsed.id)}/pub?${p.toString()}`;
+        } else {
+          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:csv' }), parsed.gid, sheetName);
+          url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
+        }
+
+        const text = await fetchWithTimeout(url);
+        if (isLoginOrHtml(text)) {
+          const err = new Error('PRIVATE_SHEET');
+          err.code = 'PRIVATE_SHEET';
+          throw err;
+        }
+
+        const matrix = parseCsv(text);
+        const maxCols = matrix.reduce((m, r) => Math.max(m, r.length), 0);
+        const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
+        const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
+
+        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'CSV' };
+      }
+
+      async function tryFetchExportCsv(parsed) {
+        const params = new URLSearchParams({ format: 'csv' });
+        if (parsed.gid) params.set('gid', parsed.gid);
+        const url = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/export?${params.toString()}`;
+
+        const text = await fetchWithTimeout(url);
+        if (isLoginOrHtml(text)) {
+          const err = new Error('PRIVATE_SHEET');
+          err.code = 'PRIVATE_SHEET';
+          throw err;
+        }
+
+        const matrix = parseCsv(text);
+        const maxCols = matrix.reduce((m, r) => Math.max(m, r.length), 0);
+        const cols = Array.from({ length: maxCols }, (_, i) => ({ id: String(i + 1), label: '' }));
+        const normalizedRows = matrix.map(r => Array.from({ length: maxCols }, (_, i) => r[i] || ''));
+
+        return { mode: 'csv', rawCols: cols, rawRows: normalizedRows, source: 'Export CSV' };
+      }
+
+      function tryJsonpDefault(parsed, sheetName) {
+        return new Promise((resolve, reject) => {
+          let finished = false;
+          const script = document.createElement('script');
+
+          window.google = window.google || {};
+          window.google.visualization = window.google.visualization || {};
+          window.google.visualization.Query = window.google.visualization.Query || {};
+          const prevHandler = window.google.visualization.Query.setResponse;
+
+          function cleanup() {
+            if (script.parentNode) script.parentNode.removeChild(script);
+            clearTimeout(timer);
+            if (prevHandler) window.google.visualization.Query.setResponse = prevHandler;
+          }
+
+          window.google.visualization.Query.setResponse = function (data) {
+            if (finished) return;
+            finished = true;
+            cleanup();
+            if (!data || data.status === 'error') {
+              reject(new Error('Google Sheets trả về lỗi.'));
+              return;
+            }
+            const table = data.table || {};
+            const cols = table.cols || [];
+            const rows = (table.rows || []).map(r => {
+              const cells = r && r.c ? r.c : [];
+              return cols.map((_, idx) => formatGvizCell(cells[idx]));
+            });
+            resolve({ mode: 'gviz', rawCols: cols, rawRows: rows, source: 'JSONP' });
+          };
+
+          const timer = setTimeout(() => {
+            if (finished) return;
+            finished = true;
+            cleanup();
+            reject(new Error('Quá thời gian kết nối.'));
+          }, 12000);
+
+          script.onerror = function () {
+            if (finished) return;
+            finished = true;
+            cleanup();
+            reject(new Error('Không thể tải script từ Google Sheets.'));
+          };
+
+          const params = buildSheetParams(new URLSearchParams({ tqx: 'out:json' }), parsed.gid, sheetName);
+          script.src = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(parsed.id)}/gviz/tq?${params.toString()}`;
+          document.head.appendChild(script);
+        });
+      }
+
+      async function fetchSheetMultiStrategy(parsed, sheetName) {
+        if (parsed.type === 'pub') return await tryFetchGvizCsv(parsed, sheetName);
+
+        const errors = [];
+        try { return await tryFetchGvizJson(parsed, sheetName); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('GViz JSON: ' + e.message); }
+        try { return await tryFetchGvizCsv(parsed, sheetName); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('GViz CSV: ' + e.message); }
+        try { return await tryFetchExportCsv(parsed); } catch (e) { if (e.code === 'PRIVATE_SHEET') throw e; errors.push('Export CSV: ' + e.message); }
+        try { return await tryJsonpDefault(parsed, sheetName); } catch (e) { errors.push('JSONP: ' + e.message); }
+
+        const err = new Error(errors.join(' | '));
+        err.code = 'ALL_FAILED';
+        throw err;
+      }
+
+      // Nhan dien cot co nhieu noi dung de tu dong thu nho chu va an bot
+      function detectLongColumns(headers, rows) {
+        return headers.map((_, colIdx) => {
+          let nonEmptyCount = 0;
+          let totalLen = 0;
+          let maxLen = 0;
+          let longCellCount = 0;
+          let hasNewline = false;
+
+          for (let i = 0; i < rows.length; i++) {
+            const val = String(rows[i][colIdx] || '').trim();
+            if (!val) continue;
+            nonEmptyCount++;
+            const len = val.length;
+            totalLen += len;
+            if (len > maxLen) maxLen = len;
+            if (len >= 32) longCellCount++;
+            if (val.includes('\n')) hasNewline = true;
+          }
+
+          if (nonEmptyCount === 0) return false;
+          const avgLen = totalLen / nonEmptyCount;
+          const longRatio = longCellCount / nonEmptyCount;
+          return avgLen >= 26 || maxLen >= 48 || longRatio >= 0.25 || hasNewline;
+        });
+      }
+
+      function rebuildTableModel() {
+        const cols = state.rawCols || [];
+        const rawRows = state.rawRows || [];
+
+        if (!cols.length && !rawRows.length) {
+          state.headers = [];
+          state.rows = [];
+          state.longColFlags = [];
+          populateColumnFilter();
+          renderExcelTable();
+          return;
+        }
+
+        const colLabels = cols.map(c => (c && c.label ? String(c.label).trim() : ''));
+        const hasAnyLabel = colLabels.some(Boolean);
+        const forceFirstRow = el.optFirstRowHeader.checked;
+
+        let headers = [];
+        let dataRows = [];
+
+        if ((state.mode === 'csv' || forceFirstRow || !hasAnyLabel) && rawRows.length > 0) {
+          const firstRow = rawRows[0];
+          headers = cols.map((c, idx) => {
+            const val = firstRow[idx] ? String(firstRow[idx]).trim() : '';
+            return val || (c && c.id ? 'Cột ' + c.id : 'Cột ' + (idx + 1));
+          });
+          dataRows = rawRows.slice(1);
+        } else {
+          headers = cols.map((c, idx) => colLabels[idx] || (c && c.id ? 'Cột ' + c.id : 'Cột ' + (idx + 1)));
+          dataRows = rawRows.slice();
+        }
+
+        // Giu nguyen cau truc bang goc (chi bo dong cuoi cung hoan toan rong)
+        dataRows = dataRows.filter(row => row.some(cell => String(cell).trim() !== ''));
+
+        let lastNonEmptyCol = headers.length - 1;
+        while (lastNonEmptyCol > 0) {
+          const headerEmpty = !headers[lastNonEmptyCol] || /^Cột [A-Z0-9]+$/.test(headers[lastNonEmptyCol]);
+          const colHasData = dataRows.some(r => String(r[lastNonEmptyCol] || '').trim() !== '');
+          if (headerEmpty && !colHasData) lastNonEmptyCol--;
+          else break;
+        }
+
+        state.headers = headers.slice(0, lastNonEmptyCol + 1);
+        state.rows = dataRows.map(r => r.slice(0, lastNonEmptyCol + 1));
+        state.longColFlags = detectLongColumns(state.headers, state.rows);
+        state.currentPage = 1;
+
+        populateColumnFilter();
+        renderExcelTable();
+
+        // Neu dang co ket qua tim kiem thi cap nhat lai
+        if (state.lastSearchQuery) {
+          executeStrictSearch();
+        }
+      }
+
+      function populateColumnFilter() {
+        const prev = el.columnFilter.value;
+        el.columnFilter.innerHTML = '<option value="all">Tìm trong tất cả cột</option>';
+        state.headers.forEach((h, idx) => {
+          const opt = document.createElement('option');
+          opt.value = String(idx);
+          opt.textContent = h;
+          el.columnFilter.appendChild(opt);
+        });
+        if (prev !== 'all' && Number(prev) < state.headers.length) {
+          el.columnFilter.value = prev;
+        }
+      }
+
+      // Tim kiem chuan xac: khong ghep tu roi rac giua cac cot, khong lay ten gan dung
+      function isCellStrictMatch(cellRaw, queryNorm, exactFullCell) {
+        const cellNorm = normalizeText(cellRaw);
+        if (!cellNorm) return false;
+
+        if (exactFullCell) {
+          return cellNorm === queryNorm;
+        }
+
+        if (cellNorm === queryNorm) return true;
+
+        // Khop dung cum tu theo ranh gioi tu (VD: "nguyen van an" KHONG khop "nguyen van anh" hay "nguyen thi an")
+        try {
+          const pattern = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escapeRegExp(queryNorm)}(?:$|[^\\p{L}\\p{N}])`, 'u');
+          return pattern.test(cellNorm);
+        } catch (_) {
+          // Fallback cho trinh duyet rat cu khong ho tro Unicode property escapes
+          const paddedCell = ' ' + cellNorm.replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF]+/gi, ' ') + ' ';
+          const paddedQuery = ' ' + queryNorm.replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF]+/gi, ' ').trim() + ' ';
+          return paddedCell.includes(paddedQuery);
+        }
+      }
+
+      function highlightExactPhrase(rawText, queryRaw) {
+        const raw = String(rawText || '');
+        if (!queryRaw) return linkifyEscaped(escapeHtml(raw));
+
+        const queryNorm = normalizeText(queryRaw);
+        if (!queryNorm) return linkifyEscaped(escapeHtml(raw));
+
+        const noAccent = el.optNoAccent.checked;
+        const origChars = Array.from(raw);
+        const normChars = origChars.map(ch =>
+          noAccent ? removeVietnameseTones(ch).toLowerCase() : ch.toLowerCase()
+        );
+        const normFull = normChars.join('');
+        const marks = new Array(origChars.length).fill(false);
+
+        const idxMap = [];
+        for (let i = 0; i < normChars.length; i++) {
+          for (let k = 0; k < normChars[i].length; k++) idxMap.push(i);
+        }
+
+        try {
+          const rx = new RegExp(`(^|[^\\p{L}\\p{N}])(${escapeRegExp(queryNorm)})(?=$|[^\\p{L}\\p{N}])`, 'gu');
+          let m;
+          while ((m = rx.exec(normFull)) !== null) {
+            const matchStart = m.index + m[1].length;
+            const matchEnd = matchStart + m[2].length;
+            for (let p = matchStart; p < matchEnd; p++) {
+              if (idxMap[p] !== undefined) marks[idxMap[p]] = true;
+            }
+          }
+        } catch (_) {
+          return linkifyEscaped(escapeHtml(raw));
+        }
+
+        let out = '';
+        let inMark = false;
+        for (let i = 0; i < origChars.length; i++) {
+          if (marks[i] && !inMark) {
+            out += '<mark>';
+            inMark = true;
+          } else if (!marks[i] && inMark) {
+            out += '</mark>';
+            inMark = false;
+          }
+          out += escapeHtml(origChars[i]);
+        }
+        if (inMark) out += '</mark>';
+        return out;
+      }
+
+      function linkifyEscaped(escapedText) {
+        if (/^https?:\/\/\S+$/i.test(escapedText)) {
+          return `<a href="${escapedText}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color:var(--primary);text-decoration:underline;">${escapedText}</a>`;
+        }
+        return escapedText;
+      }
+
+      function executeStrictSearch() {
+        const queryRaw = el.searchInput.value.trim();
+        state.lastSearchQuery = queryRaw;
+
+        if (!queryRaw) {
+          closeSearchResultSection();
+          showToast('Vui lòng nhập thông tin cần tìm.');
+          el.searchInput.focus();
+          return;
+        }
+
+        if (!state.rows.length) {
+          showToast('Chưa có dữ liệu. Hãy tải link Google Sheets trước.');
+          return;
+        }
+
+        const queryNorm = normalizeText(queryRaw);
+        const colIdx = el.columnFilter.value;
+        const exactFullCell = el.optExactCell.checked;
+
+        const matches = [];
+        for (let i = 0; i < state.rows.length; i++) {
+          const row = state.rows[i];
+          let matched = false;
+          if (colIdx === 'all') {
+            for (let c = 0; c < state.headers.length; c++) {
+              if (isCellStrictMatch(row[c], queryNorm, exactFullCell)) {
+                matched = true;
+                break;
+              }
+            }
+          } else {
+            matched = isCellStrictMatch(row[Number(colIdx)], queryNorm, exactFullCell);
+          }
+
+          if (matched) {
+            matches.push({ rowIndex: i, row });
+          }
+        }
+
+        state.searchMatches = matches;
+        renderSearchResultSection(queryRaw, matches);
+      }
+
+      function renderSearchResultSection(queryRaw, matches) {
+        el.searchResultSection.classList.remove('hidden');
+        el.searchResultTitle.innerHTML = `🎯 Kết quả tìm kiếm cho "<em>${escapeHtml(queryRaw)}</em>" (${matches.length} kết quả)`;
+        el.btnExportSearchCsv.disabled = matches.length === 0;
+
+        if (matches.length === 0) {
+          el.searchResultBody.innerHTML = `<div class="empty-state">Không có dòng nào khớp chính xác với <strong>"${escapeHtml(queryRaw)}"</strong>.</div>`;
+          return;
+        }
+
+        const cardsHtml = matches.map((item, idx) => {
+          const kvHtml = state.headers.map((h, cIdx) => {
+            const val = item.row[cIdx] !== undefined ? item.row[cIdx] : '';
+            if (String(val).trim() === '') return '';
+            return `
+              <div class="result-kv">
+                <div class="result-k">${escapeHtml(h)}</div>
+                <div class="result-v">${highlightExactPhrase(val, queryRaw)}</div>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="result-item-card">
+              <div class="result-item-head">
+                <span>Kết quả #${idx + 1} (Dòng ${item.rowIndex + 1} trong bảng gốc)</span>
+                <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Xem đầy đủ</button>
+              </div>
+              <div class="result-kv-list">${kvHtml}</div>
+            </div>
+          `;
+        }).join('');
+
+        el.searchResultBody.innerHTML = `<div class="result-cards-grid">${cardsHtml}</div>`;
+      }
+
+      function closeSearchResultSection() {
+        state.searchMatches = [];
+        state.lastSearchQuery = '';
+        el.searchResultSection.classList.add('hidden');
+        el.searchResultBody.innerHTML = '';
+        el.btnExportSearchCsv.disabled = true;
+      }
+
+      // Render bang du lieu goc (khong bi loc boi o tim kiem)
+      function renderExcelTable() {
+        const total = state.rows.length;
+        el.btnExportAllCsv.disabled = total === 0;
+
+        if (!state.headers.length || total === 0) {
+          el.tableWrapper.innerHTML = '<div class="empty-state">Dán link Google Sheets và bấm <strong>Tải dữ liệu</strong> để xem bảng tổng hợp.</div>';
+          el.paginationBar.style.display = 'none';
+          el.tableMetaInfo.textContent = 'Chạm vào 1 dòng để xem đầy đủ nội dung các cột bị thu gọn.';
+          return;
+        }
+
+        const longCount = state.longColFlags.filter(Boolean).length;
+        el.tableMetaInfo.textContent = longCount > 0
+          ? `Đã tự động thu nhỏ & rút gọn ${longCount} cột nhiều chữ để hiển thị được nhiều hàng hơn — chạm vào dòng để xem đủ.`
+          : 'Hiển thị đầy đủ cấu trúc bảng gốc — chạm vào dòng để xem chi tiết.';
+
+        const pageSize = Number(el.pageSize.value);
+        state.pageSize = pageSize;
+        const totalPages = pageSize === 0 ? 1 : Math.max(1, Math.ceil(total / pageSize));
+        if (state.currentPage > totalPages) state.currentPage = totalPages;
+
+        const start = pageSize === 0 ? 0 : (state.currentPage - 1) * pageSize;
+        const end = pageSize === 0 ? total : Math.min(start + pageSize, total);
+        const pageRows = state.rows.slice(start, end);
+
+        let html = '<table class="excel-table"><thead><tr><th class="col-stt">#</th>';
+        state.headers.forEach((h, idx) => {
+          const isLong = state.longColFlags[idx];
+          html += `<th class="${isLong ? 'col-long-header' : ''}">${escapeHtml(h)}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        pageRows.forEach((row, rIdx) => {
+          const originIdx = start + rIdx;
+          html += `<tr data-row-idx="${originIdx}"><td class="col-stt">${originIdx + 1}</td>`;
+          for (let c = 0; c < state.headers.length; c++) {
+            const val = row[c] !== undefined ? row[c] : '';
+            const safeVal = linkifyEscaped(escapeHtml(val));
+            if (state.longColFlags[c]) {
+              html += `<td class="col-long" title="${escapeHtml(val)}"><div class="cell-clamp">${safeVal}</div></td>`;
+            } else {
+              html += `<td class="col-compact">${safeVal}</td>`;
+            }
+          }
+          html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        el.tableWrapper.innerHTML = html;
+
+        if (pageSize > 0 && totalPages > 1) {
+          el.paginationBar.style.display = 'flex';
+          el.pageInfo.textContent = `Trang ${state.currentPage} / ${totalPages} (dòng ${start + 1} – ${end} / ${total.toLocaleString('vi-VN')})`;
+          el.btnFirst.disabled = state.currentPage <= 1;
+          el.btnPrev.disabled = state.currentPage <= 1;
+          el.btnNext.disabled = state.currentPage >= totalPages;
+          el.btnLast.disabled = state.currentPage >= totalPages;
+        } else {
+          el.paginationBar.style.display = 'none';
+        }
+      }
+
+      function openRowDetail(originIndex) {
+        const row = state.rows[originIndex];
+        if (!row) return;
+        el.modalTitle.textContent = `Chi tiết dòng #${originIndex + 1}`;
+        el.modalBody.innerHTML = state.headers.map((h, i) => {
+          const val = row[i] !== undefined ? row[i] : '';
+          return `
+            <div class="detail-item">
+              <div class="detail-label">${escapeHtml(h)}</div>
+              <div class="detail-value">${val ? linkifyEscaped(escapeHtml(val)) : '<span style="color:#94a3b8;">(Trống)</span>'}</div>
+            </div>
+          `;
+        }).join('');
+        el.detailModal.classList.add('open');
+      }
+
+      function closeRowDetail() {
+        el.detailModal.classList.remove('open');
+      }
+
+      // Quan ly luu cuc bo tren thiet bi nay
+      function getSavedLink() {
+        try {
+          const raw = localStorage.getItem(STORAGE_SAVED_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function updateSaveBadge() {
+        const saved = getSavedLink();
+        if (saved && saved.url) {
+          el.saveBadge.textContent = '💾 Đã lưu trên máy này';
+          el.saveBadge.className = 'badge saved';
+        } else {
+          el.saveBadge.textContent = 'Chưa lưu trên máy';
+          el.saveBadge.className = 'badge unsaved';
+        }
+      }
+
+      function savePayloadToDevice(payload) {
+        try {
+          localStorage.setItem(STORAGE_SAVED_KEY, JSON.stringify(payload));
+          updateSaveBadge();
+          showToast('✅ Đã lưu link trên máy này!');
+        } catch (_) {
+          showToast('❌ Không thể lưu bộ nhớ cục bộ trên trình duyệt này.');
+        }
+      }
+
+      function openSavePrompt(payload) {
+        state.pendingSavePayload = payload;
+        el.savePromptModal.classList.add('open');
+        setTimeout(() => el.btnPromptSaveOk.focus(), 50);
+      }
+
+      function closeSavePrompt() {
+        el.savePromptModal.classList.remove('open');
+        state.pendingSavePayload = null;
+      }
+
+      function deleteLinkFromDevice() {
+        try { localStorage.removeItem(STORAGE_SAVED_KEY); } catch (_) {}
+
+        el.sheetUrl.value = '';
+        el.sheetName.value = '';
+        el.searchInput.value = '';
+        state.rawCols = [];
+        state.rawRows = [];
+        state.headers = [];
+        state.rows = [];
+        state.longColFlags = [];
+        state.currentPage = 1;
+
+        closeSearchResultSection();
+        populateColumnFilter();
+        renderExcelTable();
+        updateSaveBadge();
+        el.sheetBadge.textContent = 'Chưa tải dữ liệu';
+        setStatus('', '');
+        setLinkPanelVisible(true);
+        el.sheetUrl.focus();
+        showToast('🗑️ Đã xóa link. Bạn có thể dán link khác!');
+      }
+
+      function exportCsvRows(rowsToExport, filename) {
+        if (!rowsToExport.length) return;
+        const escapeCsv = (val) => {
+          const s = String(val === undefined || val === null ? '' : val);
+          if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+          return s;
+        };
+
+        const lines = [
+          state.headers.map(escapeCsv).join(','),
+          ...rowsToExport.map(r => state.headers.map((_, i) => escapeCsv(r[i])).join(','))
+        ];
+
+        const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Đã xuất file CSV!');
+      }
+
+      async function loadSheet(isAutoInit = false) {
+        const url = el.sheetUrl.value.trim();
+        const sheetName = el.sheetName.value.trim();
+        const parsed = parseSheetUrl(url);
+
+        if (!parsed) {
+          setStatus('error', 'Link không hợp lệ. Hãy dán link dạng <code>https://docs.google.com/spreadsheets/d/...</code>.');
+          setLinkPanelVisible(true);
+          return;
+        }
+
+        el.btnLoad.disabled = true;
+        el.sheetBadge.textContent = 'Đang tải...';
+        setStatus('info', '⏳ Đang tải dữ liệu từ Google Sheets...');
+
+        try {
+          const result = await fetchSheetMultiStrategy(parsed, sheetName);
+          state.mode = result.mode;
+          state.rawCols = result.rawCols;
+          state.rawRows = result.rawRows;
+
+          rebuildTableModel();
+
+          el.sheetBadge.textContent = `${state.rows.length.toLocaleString('vi-VN')} dòng • ${state.headers.length} cột`;
+          setStatus('success', `✅ Tải thành công <strong>${state.rows.length.toLocaleString('vi-VN')}</strong> dòng và <strong>${state.headers.length}</strong> cột.`);
+
+          const saved = getSavedLink();
+          const alreadySameSaved = saved && saved.url === url && (saved.sheetName || '') === sheetName;
+
+          if (isAutoInit || alreadySameSaved) {
+            setLinkPanelVisible(false);
+          } else {
+            openSavePrompt({ url, sheetName });
+          }
+        } catch (err) {
+          el.sheetBadge.textContent = 'Lỗi tải dữ liệu';
+          setLinkPanelVisible(true);
+          if (err.code === 'PRIVATE_SHEET') {
+            setStatus(
+              'error',
+              '❌ <strong>File đang bị khóa quyền truy cập công khai.</strong> Hãy mở Google Sheets → <strong>Chia sẻ</strong> → chọn <strong>Bất kỳ ai có đường liên kết (Người xem)</strong>.'
+            );
+          } else {
+            setStatus(
+              'error',
+              `❌ <strong>Không tải được dữ liệu.</strong> Hãy đảm bảo đang mở trang trên link <code>https://</code> (GitHub Pages) và file đã chia sẻ công khai.<br><small>${escapeHtml(err.message)}</small>`
+            );
+          }
+        } finally {
+          el.btnLoad.disabled = false;
+        }
+      }
+
+      // Gan su kien
+      el.btnLoad.addEventListener('click', () => loadSheet(false));
+      el.btnDeleteLink.addEventListener('click', deleteLinkFromDevice);
+
+      el.btnToggleLinkPanel.addEventListener('click', () => {
+        const isHidden = el.linkPanel.classList.contains('hidden');
+        setLinkPanelVisible(isHidden);
+      });
+
+      el.btnHideLinkPanel.addEventListener('click', () => setLinkPanelVisible(false));
+
+      el.btnPromptSaveOk.addEventListener('click', () => {
+        if (state.pendingSavePayload) savePayloadToDevice(state.pendingSavePayload);
+        closeSavePrompt();
+        setLinkPanelVisible(false);
+      });
+
+      el.btnPromptNoSave.addEventListener('click', () => {
+        closeSavePrompt();
+        setLinkPanelVisible(false);
+        showToast('Không lưu link. Đã ẩn khung nhập link.');
+      });
+
+      el.btnPaste.addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            el.sheetUrl.value = text.trim();
+            showToast('Đã dán link!');
+          } else {
+            showToast('Bộ nhớ tạm đang trống.');
+          }
+        } catch (_) {
+          el.sheetUrl.focus();
+          showToast('Hãy chạm giữ vào ô nhập link và chọn Dán.');
+        }
+      });
+
+      el.sheetUrl.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSheet(false); });
+      el.sheetName.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadSheet(false); });
+
+      el.btnSearch.addEventListener('click', executeStrictSearch);
+      el.searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') executeStrictSearch();
+      });
+
+      el.btnClearSearch.addEventListener('click', () => {
+        el.searchInput.value = '';
+        closeSearchResultSection();
+        el.searchInput.focus();
+      });
+
+      el.btnCloseSearchResult.addEventListener('click', closeSearchResultSection);
+      el.optExactCell.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(); });
+      el.optNoAccent.addEventListener('change', () => { if (state.lastSearchQuery) executeStrictSearch(); });
+
+      el.searchResultBody.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-open-origin]');
+        if (btn) openRowDetail(Number(btn.dataset.openOrigin));
+      });
+
+      el.btnExportSearchCsv.addEventListener('click', () => {
+        exportCsvRows(state.searchMatches.map(m => m.row), 'ket-qua-tim-kiem.csv');
+      });
+
+      el.btnExportAllCsv.addEventListener('click', () => {
+        exportCsvRows(state.rows, 'bang-du-lieu-goc.csv');
+      });
+
+      el.optFirstRowHeader.addEventListener('change', rebuildTableModel);
+
+      el.pageSize.addEventListener('change', () => {
+        state.currentPage = 1;
+        renderExcelTable();
+      });
+
+      el.btnFirst.addEventListener('click', () => { state.currentPage = 1; renderExcelTable(); });
+      el.btnPrev.addEventListener('click', () => { state.currentPage = Math.max(1, state.currentPage - 1); renderExcelTable(); });
+      el.btnNext.addEventListener('click', () => { state.currentPage += 1; renderExcelTable(); });
+      el.btnLast.addEventListener('click', () => {
+        const ps = Number(el.pageSize.value);
+        state.currentPage = ps === 0 ? 1 : Math.ceil(state.rows.length / ps);
+        renderExcelTable();
+      });
+
+      el.tableWrapper.addEventListener('click', (e) => {
+        const tr = e.target.closest('tr[data-row-idx]');
+        if (tr) openRowDetail(Number(tr.dataset.rowIdx));
+      });
+
+      el.btnCloseModal.addEventListener('click', closeRowDetail);
+      el.detailModal.addEventListener('click', (e) => {
+        if (e.target === el.detailModal) closeRowDetail();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeRowDetail();
+          if (el.savePromptModal.classList.contains('open')) {
+            closeSavePrompt();
+            setLinkPanelVisible(false);
+          }
+        }
+      });
+
+      // Khoi tao
+      updateSaveBadge();
+      const saved = getSavedLink();
+      if (saved && saved.url) {
+        el.sheetUrl.value = saved.url;
+        el.sheetName.value = saved.sheetName || '';
+        setLinkPanelVisible(false);
+        loadSheet(true);
+      } else {
+        setLinkPanelVisible(true);
+      }
+    })();
+  </script>
+</body>
+</html>
