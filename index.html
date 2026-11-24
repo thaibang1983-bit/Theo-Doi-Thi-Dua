@@ -110,6 +110,187 @@
       display: none !important;
     }
 
+    /* Thanh tich chon 2 che do link */
+    .mode-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mode-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+      user-select: none;
+      box-shadow: var(--shadow);
+    }
+
+    .mode-option:hover {
+      border-color: #93c5fd;
+    }
+
+    .mode-option.active {
+      border-color: var(--primary);
+      background: #eff6ff;
+      box-shadow: 0 2px 8px rgba(26, 115, 232, 0.14);
+    }
+
+    .mode-option input[type="radio"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .mode-option-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .mode-option-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.25;
+    }
+
+    .mode-option.active .mode-option-title {
+      color: var(--primary);
+    }
+
+    .mode-option-sub {
+      font-size: 0.74rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .mode-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .mode-dot.saved {
+      background: var(--success);
+    }
+
+    /* Phieu tong hop diem cac mon (Che do Link 2) */
+    .score-student-card {
+      background: #fff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+      margin-bottom: 10px;
+    }
+
+    .score-student-head {
+      background: #1e3a5f;
+      color: #fff;
+      padding: 9px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .score-student-name {
+      font-size: 0.96rem;
+      font-weight: 700;
+    }
+
+    .score-student-meta {
+      font-size: 0.76rem;
+      color: #dbeafe;
+      margin-top: 2px;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      padding: 10px 12px;
+    }
+
+    .score-chip {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 7px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 3px;
+    }
+
+    .score-chip-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .score-chip-val {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .score-chip-val.is-num {
+      color: #1d4ed8;
+    }
+
+    .score-table-wrap {
+      overflow-x: auto;
+      padding: 8px 10px;
+    }
+
+    table.score-mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    table.score-mini-table th {
+      background: #eff6ff;
+      color: #1e3a5f;
+      text-align: left;
+      padding: 6px 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 0.76rem;
+      white-space: nowrap;
+    }
+
+    table.score-mini-table td {
+      padding: 6px 8px;
+      border: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+
+    table.score-mini-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+
     .section-header {
       display: flex;
       flex-wrap: wrap;
@@ -779,6 +960,14 @@
       .result-cards-grid {
         grid-template-columns: 1fr;
       }
+
+      .mode-switcher {
+        grid-template-columns: 1fr;
+      }
+
+      .score-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   </style>
 </head>
@@ -798,19 +987,43 @@
       </div>
     </header>
 
+    <!-- 2 che do tich chon link hien thi du lieu -->
+    <nav class="mode-switcher" aria-label="Chọn nguồn dữ liệu Google Sheets">
+      <label class="mode-option active" id="modeCardConduct">
+        <input type="radio" name="dataMode" id="radioModeConduct" value="conduct" checked>
+        <div class="mode-option-text">
+          <span class="mode-option-title">📋 Rèn luyện / Thi đua</span>
+          <span class="mode-option-sub">
+            <span class="mode-dot" id="dotModeConduct"></span>
+            <span id="subModeConduct">Link 1 • Chưa lưu</span>
+          </span>
+        </div>
+      </label>
+      <label class="mode-option" id="modeCardScores">
+        <input type="radio" name="dataMode" id="radioModeScores" value="scores">
+        <div class="mode-option-text">
+          <span class="mode-option-title">🎓 Xem điểm các môn</span>
+          <span class="mode-option-sub">
+            <span class="mode-dot" id="dotModeScores"></span>
+            <span id="subModeScores">Link 2 • Chưa lưu</span>
+          </span>
+        </div>
+      </label>
+    </nav>
+
     <!-- Thong bao trang thai luon dat o tren cung de de nhin -->
     <div id="statusMsg" class="status-msg"></div>
 
     <!-- 1. Khu vuc nhap link (co the an/hien) -->
     <section class="card" id="linkPanel">
       <div class="section-header">
-        <div class="section-title">🔗 Thiết lập link Google Sheets</div>
+        <div class="section-title" id="linkPanelTitle">🔗 Thiết lập Link 1: Rèn luyện / Thi đua</div>
         <button type="button" class="btn-secondary btn-sm" id="btnHideLinkPanel">🙈 Ẩn khu vực này</button>
       </div>
 
       <div class="form-grid">
         <div class="field">
-          <label for="sheetUrl">Đường dẫn Google Sheets (chế độ công khai: Bất kỳ ai có đường liên kết → Người xem)</label>
+          <label for="sheetUrl" id="sheetUrlLabel">Đường dẫn Google Sheets — Link 1: Rèn luyện / Thi đua (chế độ công khai: Bất kỳ ai có đường liên kết → Người xem)</label>
           <input
             type="url"
             id="sheetUrl"
@@ -842,7 +1055,7 @@
     <!-- 2. Khu vuc tim kiem chuan xac -->
     <section class="card" id="searchPanel">
       <div class="section-header">
-        <div class="section-title">🔍 Tìm kiếm thông tin chính xác</div>
+        <div class="section-title" id="searchPanelTitle">🔍 Tìm kiếm thông tin chính xác</div>
         <span style="font-size:0.78rem;color:var(--muted);">Nhập từ khóa rồi bấm <strong>Tìm kiếm</strong> (không hiện gợi ý gần đúng)</span>
       </div>
 
@@ -902,7 +1115,7 @@
     <!-- 3. Bang du lieu tong hop goc -->
     <section class="card" id="excelSection">
       <div class="section-header">
-        <div class="section-title">📋 Bảng dữ liệu gốc (Tổng hợp Excel)</div>
+        <div class="section-title" id="excelSectionTitle">📋 Bảng dữ liệu gốc (Tổng hợp Excel)</div>
         <div class="btn-group">
           <button type="button" class="btn-secondary btn-sm" id="btnExportAllCsv" disabled>⬇ Xuất CSV</button>
         </div>
@@ -976,11 +1189,35 @@
     (function () {
       'use strict';
 
-      const STORAGE_SAVED_KEY = 'gsheet_local_device_link_v4';
-      const LEGACY_KEYS = ['gsheet_local_device_link_v3', 'gsheet_local_device_link_v2'];
+      const STORAGE_APP_KEY = 'gsheet_dual_links_v5';
+      const LEGACY_KEYS = ['gsheet_local_device_link_v4', 'gsheet_local_device_link_v3', 'gsheet_local_device_link_v2'];
       const AUTO_REFRESH_MIN_INTERVAL_MS = 12000;
 
+      const MODE_META = {
+        conduct: {
+          shortName: 'Link 1: Rèn luyện / Thi đua',
+          linkTitle: '🔗 Thiết lập Link 1: Rèn luyện / Thi đua',
+          urlLabel: 'Đường dẫn Google Sheets — Link 1: Rèn luyện / Thi đua (công khai: Bất kỳ ai có đường liên kết → Người xem)',
+          searchTitle: '🔍 Tìm kiếm thông tin chính xác',
+          searchPlaceholder: 'Nhập họ tên cần tìm (hoặc để trống & chọn cột để lọc Top 10)...',
+          excelTitle: '📋 Bảng dữ liệu gốc (Rèn luyện / Thi đua)'
+        },
+        scores: {
+          shortName: 'Link 2: Xem điểm các môn',
+          linkTitle: '🔗 Thiết lập Link 2: Xem điểm các môn (Excel / Google Sheets)',
+          urlLabel: 'Đường dẫn Google Sheets / Excel chia sẻ — Link 2: Xem điểm các môn (công khai: Người xem)',
+          searchTitle: '🎓 Lọc tên tổng hợp điểm các môn',
+          searchPlaceholder: 'Nhập họ tên học sinh để tổng hợp điểm các môn (hoặc bỏ trống & chọn môn lọc Top 10)...',
+          excelTitle: '🎓 Bảng điểm gốc (Tổng hợp Excel)'
+        }
+      };
+
       const state = {
+        activeMode: 'conduct', // 'conduct' | 'scores'
+        modeCache: {
+          conduct: null,
+          scores: null
+        },
         mode: '',
         rawCols: [],
         rawRows: [],
@@ -993,6 +1230,7 @@
         nameColFlags: [],
         timeColIdx: -1,
         deductColIdx: -1,
+        subjectColIdx: -1,
         searchMatches: [],
         lastSearchQuery: '',
         lastSearchMode: '', // '' | 'strict' | 'top10'
@@ -1005,6 +1243,18 @@
       };
 
       const el = {
+        modeCardConduct: document.getElementById('modeCardConduct'),
+        modeCardScores: document.getElementById('modeCardScores'),
+        radioModeConduct: document.getElementById('radioModeConduct'),
+        radioModeScores: document.getElementById('radioModeScores'),
+        dotModeConduct: document.getElementById('dotModeConduct'),
+        dotModeScores: document.getElementById('dotModeScores'),
+        subModeConduct: document.getElementById('subModeConduct'),
+        subModeScores: document.getElementById('subModeScores'),
+        linkPanelTitle: document.getElementById('linkPanelTitle'),
+        sheetUrlLabel: document.getElementById('sheetUrlLabel'),
+        searchPanelTitle: document.getElementById('searchPanelTitle'),
+        excelSectionTitle: document.getElementById('excelSectionTitle'),
         linkPanel: document.getElementById('linkPanel'),
         btnToggleLinkPanel: document.getElementById('btnToggleLinkPanel'),
         btnHideLinkPanel: document.getElementById('btnHideLinkPanel'),
@@ -1200,6 +1450,9 @@
 
         const idMatch = cleaned.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
         if (idMatch) return { type: 'standard', id: idMatch[1], gid };
+
+        const driveFileMatch = cleaned.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+        if (driveFileMatch) return { type: 'standard', id: driveFileMatch[1], gid };
 
         if (/^[a-zA-Z0-9-_]{20,}$/.test(cleaned)) {
           return { type: 'standard', id: cleaned, gid };
@@ -1764,16 +2017,18 @@
       }
 
       function detectTimeColumnIndex(headers, rows) {
-        // Uu tien nhan dien theo tieu de cot
+        // Uu tien nhan dien theo tieu de cot (loai tru Ngay sinh / Nam sinh)
         for (let i = 0; i < headers.length; i++) {
           const hNorm = normalizeText(headers[i]);
+          if (/(ngay sinh|nam sinh|sinh nhat)/.test(hNorm)) continue;
           if (/(thoi gian nhan|thoi gian|timestamp|ngay nhan|ngay gui|ngay cap nhat|ngay)/.test(hNorm)) {
             return i;
           }
         }
-        // Du phong: kiem tra du lieu 20 dong dau
+        // Du phong: kiem tra du lieu 20 dong dau (bo qua cot Ngay sinh)
         const sampleLimit = Math.min(20, rows.length);
         for (let c = 0; c < headers.length; c++) {
+          if (/(ngay sinh|nam sinh|sinh nhat)/.test(normalizeText(headers[c]))) continue;
           let nonEmpty = 0;
           let parsedOk = 0;
           for (let r = 0; r < sampleLimit; r++) {
@@ -1797,6 +2052,16 @@
         for (let i = 0; i < headers.length; i++) {
           const hNorm = normalizeText(headers[i]);
           if (/(diem.*tru|tru.*diem)/.test(hNorm)) return i;
+        }
+        return -1;
+      }
+
+      function detectSubjectColumnIndex(headers) {
+        for (let i = 0; i < headers.length; i++) {
+          const hNorm = normalizeText(headers[i]);
+          if (/^(mon|mon hoc|ten mon|bo mon|phan mon)$/.test(hNorm) || /(mon hoc|ten mon)/.test(hNorm)) {
+            return i;
+          }
         }
         return -1;
       }
@@ -1894,6 +2159,9 @@
         state.nameColFlags = detectNameColumns(state.headers);
         state.timeColIdx = detectTimeColumnIndex(state.headers, state.rows);
         state.deductColIdx = detectDeductColumnIndex(state.headers);
+        state.subjectColIdx = detectSubjectColumnIndex(state.headers);
+
+        saveActiveModeCache();
 
         renderBannerBox();
         populateColumnFilter();
@@ -2016,10 +2284,11 @@
 
         const nowMs = Date.now();
         const nameColIdx = state.nameColFlags.findIndex(Boolean);
-        const timeColIdx = state.timeColIdx;
-        const deductColIdx = state.deductColIdx;
+        const useTimeWindow = state.activeMode === 'conduct' && state.timeColIdx >= 0;
+        const timeColIdx = useTimeWindow ? state.timeColIdx : -1;
+        const deductColIdx = state.activeMode === 'conduct' ? state.deductColIdx : -1;
 
-        // Buoc 1: Tim moc thoi gian nhan du lieu moi nhat so voi thoi gian thuc tren toan bang
+        // Buoc 1: Tim moc thoi gian nhan du lieu moi nhat so voi thoi gian thuc (ap dung cho che do Ren luyen / Thi dua)
         let latestTs = -Infinity;
         let fallbackLatestTs = -Infinity;
         if (timeColIdx >= 0) {
@@ -2241,8 +2510,141 @@
         renderSearchResultSection(queryRaw, matches);
       }
 
+      function renderScoreSummarySection(queryRaw, matches) {
+        el.searchResultSection.classList.remove('hidden');
+        el.btnExportSearchCsv.disabled = matches.length === 0;
+
+        if (matches.length === 0) {
+          el.searchResultTitle.innerHTML = `🎓 Tổng hợp điểm — "<em>${escapeHtml(queryRaw)}</em>" (0 kết quả)`;
+          el.searchResultBody.innerHTML = `<div class="empty-state">Không tìm thấy học sinh nào khớp chính xác với <strong>"${escapeHtml(queryRaw)}"</strong> trong bảng điểm.</div>`;
+          return;
+        }
+
+        const hideEmpty = el.optHideEmptyFields.checked;
+        const nameColIdx = state.nameColFlags.findIndex(Boolean);
+        const subjectColIdx = state.subjectColIdx;
+
+        // Gom cac dong trung ten hoc sinh vao chung 1 phieu tong hop diem
+        const grouped = new Map();
+        matches.forEach(item => {
+          const stName = nameColIdx >= 0 ? normSpaces(item.row[nameColIdx]) : `Dòng ${item.rowIndex + 1}`;
+          const key = nameColIdx >= 0 && stName ? normalizeText(stName) : `row_${item.rowIndex}`;
+          if (!grouped.has(key)) {
+            grouped.set(key, { studentName: stName || `Dòng ${item.rowIndex + 1}`, items: [] });
+          }
+          grouped.get(key).items.push(item);
+        });
+
+        const studentGroups = Array.from(grouped.values());
+        el.searchResultTitle.innerHTML = `🎓 Phiếu tổng hợp điểm — "<em>${escapeHtml(queryRaw)}</em>" (${studentGroups.length} HS • ${matches.length} dòng)`;
+
+        // Nhan dien cot thong tin hanh chinh (STT, Ho ten, Lop, Ngay sinh, Gioi tinh)
+        const isMetaCol = (idx) => {
+          if (idx === nameColIdx) return true;
+          const hNorm = normalizeText(state.headers[idx]);
+          return /^(stt|tt|so tt|ma hs|ma hoc sinh|lop|to|khoi|gioi tinh|nam nu|ngay sinh|nam sinh)$/.test(hNorm);
+        };
+
+        const cardsHtml = studentGroups.map(group => {
+          const firstRow = group.items[0].row;
+          const metaBadges = [];
+          state.headers.forEach((h, cIdx) => {
+            if (cIdx === nameColIdx || !isMetaCol(cIdx)) return;
+            const v = normSpaces(firstRow[cIdx]);
+            if (hasFieldData(v)) {
+              metaBadges.push(`${h}: ${v}`);
+            }
+          });
+
+          // Truong hop A: 1 hoc sinh co 1 dong duy nhat (cac cot la cac mon hoc)
+          if (group.items.length === 1) {
+            const item = group.items[0];
+            let shownCols = 0;
+            const chipsHtml = state.headers.map((h, cIdx) => {
+              if (cIdx === nameColIdx) return '';
+              if (isMetaCol(cIdx)) return '';
+              const val = item.row[cIdx] !== undefined ? item.row[cIdx] : '';
+              const hasData = hasFieldData(val);
+              if (hideEmpty && !hasData) return '';
+              shownCols++;
+              const isNum = hasData && !Number.isNaN(parseNumericMetric(val)) && /^-?\d+(?:[.,]\d+)?$/.test(normSpaces(val));
+              return `
+                <div class="score-chip">
+                  <div class="score-chip-label">${escapeHtml(h)}</div>
+                  <div class="score-chip-val${isNum ? ' is-num' : ''}">${hasData ? highlightExactPhrase(val, queryRaw) : '<span style="color:#94a3b8;font-weight:400;font-size:0.8rem;">(Trống)</span>'}</div>
+                </div>
+              `;
+            }).join('');
+
+            return `
+              <div class="score-student-card">
+                <div class="score-student-head">
+                  <div>
+                    <div class="score-student-name">🎓 ${highlightExactPhrase(group.studentName, queryRaw)}</div>
+                    <div class="score-student-meta">${metaBadges.length ? escapeHtml(metaBadges.join(' • ')) + ' • ' : ''}${shownCols} mục điểm có dữ liệu (Dòng ${item.rowIndex + 1})</div>
+                  </div>
+                  <button type="button" class="btn-secondary btn-sm" data-open-origin="${item.rowIndex}">Xem đầy đủ</button>
+                </div>
+                <div class="score-grid">
+                  ${chipsHtml || '<div style="color:var(--muted);font-size:0.86rem;grid-column:1/-1;">Chưa có dữ liệu điểm cho học sinh này.</div>'}
+                </div>
+              </div>
+            `;
+          }
+
+          // Truong hop B: 1 hoc sinh co nhieu dong (VD: moi dong la 1 mon hoc hoac 1 dot kiem tra) -> gop thanh bang tong hop
+          const activeColIndices = [];
+          state.headers.forEach((h, cIdx) => {
+            if (cIdx === nameColIdx || isMetaCol(cIdx)) return;
+            const anyHasData = group.items.some(it => hasFieldData(it.row[cIdx]));
+            if (!hideEmpty || anyHasData) {
+              activeColIndices.push(cIdx);
+            }
+          });
+
+          // Dua cot Mon hoc (neu co) len dau tien
+          if (subjectColIdx >= 0) {
+            const pos = activeColIndices.indexOf(subjectColIdx);
+            if (pos > 0) {
+              activeColIndices.splice(pos, 1);
+              activeColIndices.unshift(subjectColIdx);
+            }
+          }
+
+          const theadCols = activeColIndices.map(cIdx => `<th>${escapeHtml(state.headers[cIdx])}</th>`).join('');
+          const tbodyRows = group.items.map(it => {
+            const tds = activeColIndices.map(cIdx => {
+              const val = it.row[cIdx] !== undefined ? it.row[cIdx] : '';
+              const hasData = hasFieldData(val);
+              return `<td>${hasData ? highlightExactPhrase(val, queryRaw) : '<span style="color:#94a3b8;">-</span>'}</td>`;
+            }).join('');
+            return `<tr>${tds}<td><button type="button" class="btn-secondary btn-sm" data-open-origin="${it.rowIndex}">Xem</button></td></tr>`;
+          }).join('');
+
+          return `
+            <div class="score-student-card">
+              <div class="score-student-head">
+                <div>
+                  <div class="score-student-name">🎓 ${highlightExactPhrase(group.studentName, queryRaw)}</div>
+                  <div class="score-student-meta">${metaBadges.length ? escapeHtml(metaBadges.join(' • ')) + ' • ' : ''}Tổng hợp ${group.items.length} dòng điểm</div>
+                </div>
+              </div>
+              <div class="score-table-wrap">
+                ${activeColIndices.length ? `<table class="score-mini-table"><thead><tr>${theadCols}<th>Chi tiết</th></tr></thead><tbody>${tbodyRows}</tbody></table>` : '<div class="empty-state">Chưa có dữ liệu điểm.</div>'}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        el.searchResultBody.innerHTML = cardsHtml;
+      }
+
       function renderSearchResultSection(queryRaw, matches) {
         if (!queryRaw) return;
+        if (state.activeMode === 'scores') {
+          renderScoreSummarySection(queryRaw, matches);
+          return;
+        }
         el.searchResultSection.classList.remove('hidden');
         el.searchResultTitle.innerHTML = `🎯 Kết quả tìm kiếm cho "<em>${escapeHtml(queryRaw)}</em>" (${matches.length} kết quả)`;
         el.btnExportSearchCsv.disabled = matches.length === 0;
@@ -2380,28 +2782,92 @@
         el.detailModal.classList.remove('open');
       }
 
-      // Quan ly luu cuc bo tren thiet bi nay
-      function getSavedLink() {
+      // Quan ly luu cuc bo 2 link doc lap tren thiet bi nay (Link 1: Ren luyen / Link 2: Xem diem)
+      function getAppStorage() {
+        const defaultStore = {
+          activeMode: 'conduct',
+          links: {
+            conduct: { url: '', sheetName: '', autoRefresh: true },
+            scores: { url: '', sheetName: '', autoRefresh: true }
+          }
+        };
         try {
-          let raw = localStorage.getItem(STORAGE_SAVED_KEY);
-          if (!raw) {
-            for (const oldKey of LEGACY_KEYS) {
-              const legacy = localStorage.getItem(oldKey);
-              if (legacy) {
-                raw = legacy;
-                localStorage.setItem(STORAGE_SAVED_KEY, legacy);
+          let raw = localStorage.getItem(STORAGE_APP_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            return {
+              activeMode: parsed.activeMode === 'scores' ? 'scores' : 'conduct',
+              links: {
+                conduct: Object.assign({ url: '', sheetName: '', autoRefresh: true }, parsed.links && parsed.links.conduct),
+                scores: Object.assign({ url: '', sheetName: '', autoRefresh: true }, parsed.links && parsed.links.scores)
+              }
+            };
+          }
+          // Tu dong chuyen doi du lieu link cu (neu co) sang Link 1 (conduct)
+          for (const oldKey of LEGACY_KEYS) {
+            const legacyRaw = localStorage.getItem(oldKey);
+            if (legacyRaw) {
+              const legacy = JSON.parse(legacyRaw);
+              if (legacy && legacy.url) {
+                defaultStore.links.conduct = {
+                  url: legacy.url,
+                  sheetName: legacy.sheetName || '',
+                  autoRefresh: typeof legacy.autoRefresh === 'boolean' ? legacy.autoRefresh : true
+                };
+                localStorage.setItem(STORAGE_APP_KEY, JSON.stringify(defaultStore));
                 break;
               }
             }
           }
-          return raw ? JSON.parse(raw) : null;
+        } catch (_) {}
+        return defaultStore;
+      }
+
+      function saveAppStorage(store) {
+        try {
+          localStorage.setItem(STORAGE_APP_KEY, JSON.stringify(store));
+          return true;
         } catch (_) {
-          return null;
+          return false;
         }
       }
 
+      function getSavedLink(mode = state.activeMode) {
+        const store = getAppStorage();
+        const entry = store.links[mode];
+        return entry && entry.url ? entry : null;
+      }
+
+      function updateModeUI() {
+        const mode = state.activeMode;
+        const meta = MODE_META[mode];
+        const store = getAppStorage();
+
+        el.radioModeConduct.checked = mode === 'conduct';
+        el.radioModeScores.checked = mode === 'scores';
+        el.modeCardConduct.classList.toggle('active', mode === 'conduct');
+        el.modeCardScores.classList.toggle('active', mode === 'scores');
+
+        const hasConduct = !!(store.links.conduct && store.links.conduct.url);
+        const hasScores = !!(store.links.scores && store.links.scores.url);
+
+        el.dotModeConduct.classList.toggle('saved', hasConduct);
+        el.subModeConduct.textContent = hasConduct ? 'Link 1 • Đã lưu trên máy' : 'Link 1 • Chưa lưu';
+
+        el.dotModeScores.classList.toggle('saved', hasScores);
+        el.subModeScores.textContent = hasScores ? 'Link 2 • Đã lưu trên máy' : 'Link 2 • Chưa lưu';
+
+        el.linkPanelTitle.textContent = meta.linkTitle;
+        el.sheetUrlLabel.textContent = meta.urlLabel;
+        el.searchPanelTitle.textContent = meta.searchTitle;
+        el.searchInput.placeholder = meta.searchPlaceholder;
+        el.excelSectionTitle.textContent = meta.excelTitle;
+
+        updateSaveBadge();
+      }
+
       function updateSaveBadge() {
-        const saved = getSavedLink();
+        const saved = getSavedLink(state.activeMode);
         if (saved && saved.url) {
           el.saveBadge.textContent = '💾 Đã lưu trên máy này';
           el.saveBadge.className = 'badge saved';
@@ -2411,41 +2877,27 @@
         }
       }
 
-      function savePayloadToDevice(payload) {
-        try {
-          const fullPayload = {
-            url: payload.url,
-            sheetName: payload.sheetName || '',
-            autoRefresh: el.optAutoRefresh.checked
-          };
-          localStorage.setItem(STORAGE_SAVED_KEY, JSON.stringify(fullPayload));
-          updateSaveBadge();
-          showToast('✅ Đã lưu link & bật tự động cập nhật trên máy này!');
-        } catch (_) {
-          showToast('❌ Không thể lưu bộ nhớ cục bộ trên trình duyệt này.');
-        }
+      function saveActiveModeCache() {
+        state.modeCache[state.activeMode] = {
+          mode: state.mode,
+          rawCols: state.rawCols,
+          rawRows: state.rawRows,
+          topProbeRows: state.topProbeRows,
+          bannerLines: state.bannerLines,
+          headerRows: state.headerRows,
+          headers: state.headers,
+          rows: state.rows,
+          longColFlags: state.longColFlags,
+          nameColFlags: state.nameColFlags,
+          timeColIdx: state.timeColIdx,
+          deductColIdx: state.deductColIdx,
+          subjectColIdx: state.subjectColIdx,
+          lastLoadedAt: state.lastLoadedAt
+        };
       }
 
-      function openSavePrompt(payload) {
-        state.pendingSavePayload = payload;
-        el.savePromptModal.classList.add('open');
-        setTimeout(() => el.btnPromptSaveOk.focus(), 50);
-      }
-
-      function closeSavePrompt() {
-        el.savePromptModal.classList.remove('open');
-        state.pendingSavePayload = null;
-      }
-
-      function deleteLinkFromDevice() {
-        try {
-          localStorage.removeItem(STORAGE_SAVED_KEY);
-          for (const oldKey of LEGACY_KEYS) localStorage.removeItem(oldKey);
-        } catch (_) {}
-
-        el.sheetUrl.value = '';
-        el.sheetName.value = '';
-        el.searchInput.value = '';
+      function clearActiveViewData() {
+        state.mode = '';
         state.rawCols = [];
         state.rawRows = [];
         state.topProbeRows = [];
@@ -2457,6 +2909,7 @@
         state.nameColFlags = [];
         state.timeColIdx = -1;
         state.deductColIdx = -1;
+        state.subjectColIdx = -1;
         state.currentPage = 1;
         state.lastLoadedAt = 0;
 
@@ -2464,14 +2917,130 @@
         renderBannerBox();
         populateColumnFilter();
         renderExcelTable();
-        updateSaveBadge();
         updateLastSyncBadge(0);
-        el.btnRefreshNow.disabled = true;
+        el.btnRefreshNow.disabled = !el.sheetUrl.value.trim();
         el.sheetBadge.textContent = 'Chưa tải dữ liệu';
+      }
+
+      function switchDataMode(newMode) {
+        if (newMode !== 'conduct' && newMode !== 'scores') return;
+        if (state.isLoading) {
+          showToast('Đang tải dữ liệu, vui lòng đợi giây lát...');
+          el.radioModeConduct.checked = state.activeMode === 'conduct';
+          el.radioModeScores.checked = state.activeMode === 'scores';
+          return;
+        }
+        if (newMode === state.activeMode) return;
+
+        // Luu trang thai mode hien tai vao localStorage
+        state.activeMode = newMode;
+        const store = getAppStorage();
+        store.activeMode = newMode;
+        saveAppStorage(store);
+
+        // Xoa ket qua tim kiem cua che do cu
+        el.searchInput.value = '';
+        closeSearchResultSection();
+        setStatus('', '');
+
+        const entry = store.links[newMode] || { url: '', sheetName: '', autoRefresh: true };
+        el.sheetUrl.value = entry.url || '';
+        el.sheetName.value = entry.sheetName || '';
+        el.optAutoRefresh.checked = typeof entry.autoRefresh === 'boolean' ? entry.autoRefresh : true;
+
+        updateModeUI();
+
+        const cached = state.modeCache[newMode];
+        if (cached && cached.rows && cached.rows.length > 0 && entry.url) {
+          state.mode = cached.mode;
+          state.rawCols = cached.rawCols;
+          state.rawRows = cached.rawRows;
+          state.topProbeRows = cached.topProbeRows;
+          state.bannerLines = cached.bannerLines;
+          state.headerRows = cached.headerRows;
+          state.headers = cached.headers;
+          state.rows = cached.rows;
+          state.longColFlags = cached.longColFlags;
+          state.nameColFlags = cached.nameColFlags;
+          state.timeColIdx = cached.timeColIdx;
+          state.deductColIdx = cached.deductColIdx;
+          state.subjectColIdx = cached.subjectColIdx;
+          state.lastLoadedAt = cached.lastLoadedAt;
+          state.currentPage = 1;
+
+          renderBannerBox();
+          populateColumnFilter();
+          renderExcelTable();
+          el.sheetBadge.textContent = `${state.rows.length.toLocaleString('vi-VN')} dòng • ${state.headers.length} cột`;
+          updateLastSyncBadge(state.lastLoadedAt);
+          el.btnRefreshNow.disabled = false;
+          setLinkPanelVisible(false);
+
+          if (el.optAutoRefresh.checked && Date.now() - state.lastLoadedAt > AUTO_REFRESH_MIN_INTERVAL_MS) {
+            loadSheet({ isAutoInit: true, isBackgroundRefresh: true });
+          }
+          return;
+        }
+
+        clearActiveViewData();
+        if (entry.url) {
+          setLinkPanelVisible(false);
+          el.btnRefreshNow.disabled = false;
+          loadSheet({ isAutoInit: true });
+        } else {
+          setLinkPanelVisible(true);
+          el.sheetUrl.focus();
+        }
+      }
+
+      function savePayloadToDevice(payload) {
+        const targetMode = payload.mode || state.activeMode;
+        const store = getAppStorage();
+        store.activeMode = state.activeMode;
+        store.links[targetMode] = {
+          url: payload.url,
+          sheetName: payload.sheetName || '',
+          autoRefresh: el.optAutoRefresh.checked
+        };
+        if (saveAppStorage(store)) {
+          updateModeUI();
+          showToast(`✅ Đã lưu ${MODE_META[targetMode].shortName} trên máy này!`);
+        } else {
+          showToast('❌ Không thể lưu bộ nhớ cục bộ trên trình duyệt này.');
+        }
+      }
+
+      function openSavePrompt(payload) {
+        state.pendingSavePayload = payload;
+        const titleEl = document.getElementById('savePromptTitle');
+        if (titleEl) {
+          titleEl.textContent = `💾 Lưu ${MODE_META[state.activeMode].shortName}?`;
+        }
+        el.savePromptModal.classList.add('open');
+        setTimeout(() => el.btnPromptSaveOk.focus(), 50);
+      }
+
+      function closeSavePrompt() {
+        el.savePromptModal.classList.remove('open');
+        state.pendingSavePayload = null;
+      }
+
+      function deleteLinkFromDevice() {
+        const mode = state.activeMode;
+        const store = getAppStorage();
+        store.links[mode] = { url: '', sheetName: '', autoRefresh: true };
+        saveAppStorage(store);
+        state.modeCache[mode] = null;
+
+        el.sheetUrl.value = '';
+        el.sheetName.value = '';
+        el.searchInput.value = '';
+        clearActiveViewData();
+        updateModeUI();
         setStatus('', '');
         setLinkPanelVisible(true);
         el.sheetUrl.focus();
-        showToast('🗑️ Đã xóa link. Bạn có thể dán link khác!');
+        showToast(`🗑️ Đã xóa ${MODE_META[mode].shortName}. Bạn có thể dán link khác!`);
       }
 
       function exportCsvRows(rowsToExport, filename) {
@@ -2547,7 +3116,7 @@
           if (isAutoInit || isBackgroundRefresh || alreadySameSaved) {
             setLinkPanelVisible(false);
           } else {
-            openSavePrompt({ url, sheetName });
+            openSavePrompt({ url, sheetName, mode: state.activeMode });
           }
         } catch (err) {
           el.sheetBadge.textContent = 'Lỗi tải dữ liệu';
@@ -2573,6 +3142,13 @@
       }
 
       // Gan su kien
+      el.radioModeConduct.addEventListener('change', () => {
+        if (el.radioModeConduct.checked) switchDataMode('conduct');
+      });
+      el.radioModeScores.addEventListener('change', () => {
+        if (el.radioModeScores.checked) switchDataMode('scores');
+      });
+
       el.btnLoad.addEventListener('click', () => loadSheet({ isAutoInit: false }));
       el.btnRefreshNow.addEventListener('click', () => loadSheet({ isBackgroundRefresh: true }));
       el.btnDeleteLink.addEventListener('click', deleteLinkFromDevice);
@@ -2585,9 +3161,9 @@
       el.btnHideLinkPanel.addEventListener('click', () => setLinkPanelVisible(false));
 
       el.optAutoRefresh.addEventListener('change', () => {
-        const saved = getSavedLink();
+        const saved = getSavedLink(state.activeMode);
         if (saved && saved.url) {
-          savePayloadToDevice(saved);
+          savePayloadToDevice({ url: saved.url, sheetName: saved.sheetName || '', mode: state.activeMode });
         }
       });
 
@@ -2654,11 +3230,11 @@
       });
 
       el.btnExportSearchCsv.addEventListener('click', () => {
-        exportCsvRows(state.searchMatches.map(m => m.row), 'ket-qua-tim-kiem.csv');
+        exportCsvRows(state.searchMatches.map(m => m.row), state.activeMode === 'scores' ? 'tong-hop-diem-hs.csv' : 'ket-qua-tim-kiem.csv');
       });
 
       el.btnExportAllCsv.addEventListener('click', () => {
-        exportCsvRows(state.rows, 'bang-du-lieu-goc.csv');
+        exportCsvRows(state.rows, state.activeMode === 'scores' ? 'bang-diem-goc.csv' : 'bang-du-lieu-goc.csv');
       });
 
       el.pageSize.addEventListener('change', () => {
@@ -2722,8 +3298,10 @@
       });
 
       // Khoi tao moi lan mo trang
-      updateSaveBadge();
-      const saved = getSavedLink();
+      const appStore = getAppStorage();
+      state.activeMode = appStore.activeMode || 'conduct';
+      updateModeUI();
+      const saved = getSavedLink(state.activeMode);
       if (saved && saved.url) {
         el.sheetUrl.value = saved.url;
         el.sheetName.value = saved.sheetName || '';
